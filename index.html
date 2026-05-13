@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>STARLINE BUILDERS LTD. – Invest Smart. Live Better.</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <link rel="icon" type="image/png" href="company .jpeg">
+  <link rel="stylesheet" href="Style.css">
+</head>
+<body>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- LOADING SCREEN -->
+<div class="loader" id="loader">
+  <div class="loader-inner">
+    <div class="loader-logo">
+      <img src="company .jpeg" alt="Starline Builders" onerror="this.style.display='none'"/>
+      <div class="loader-brand">STARLINE BUILDERS LTD. </div>
+    </div>
+    <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+    <div class="loader-text">Loading Excellence...</div>
+  </div>
+</div>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <!-- LEFT: Logo -->
+    <div class="nav-logo" id="navLogoArea">
+      <img src="company .jpeg" alt="Starline Builders" class="logo-img" id="navLogoImg" onerror="this.style.display='none'"/>
+      <div class="nav-brand">
+        <span class="brand-name" id="navBrandName">STARLINE BUILDERS LTD.</span>
+   </div>
+    </div>
+
+    <!-- CENTER: Menu -->
+    <ul class="nav-menu" id="navMenu">
+      <li><a href="#home" class="nav-link active">Home</a></li>
+      <li><a href="#about" class="nav-link">About</a></li>
+
+      <!-- Property Dropdown -->
+      <li class="has-dropdown">
+        <a href="#properties" class="nav-link">Property <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <div class="dropdown-menu">
+          <a href="#properties" class="dropdown-item" data-filter="status" data-value="ongoing"><span class="dot ongoing"></span>Ongoing</a>
+          <a href="#properties" class="dropdown-item" data-filter="status" data-value="handover"><span class="dot handover"></span>Handover</a>
+          <a href="#properties" class="dropdown-item" data-filter="status" data-value="processing"><span class="dot processing"></span>Processing</a>
+          <a href="#properties" class="dropdown-item" data-filter="status" data-value="upcoming"><span class="dot upcoming"></span>Upcoming</a>
+          <a href="#properties" class="dropdown-item" data-filter="status" data-value="featured"><span class="dot featured"></span>Featured</a>
+        </div>
+      </li>
+
+      <!-- Location Dropdown -->
+      <li class="has-dropdown">
+        <a href="#properties" class="nav-link">Location <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <div class="dropdown-menu">
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Gulshan">Gulshan</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Banani">Banani</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Bashundhara">Bashundhara</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Dhanmondi">Dhanmondi</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Uttara">Uttara</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Mirpur">Mirpur</a>
+          <a href="#properties" class="dropdown-item" data-filter="location" data-value="Purbachal">Purbachal</a>
+        </div>
+      </li>
+
+      <!-- Size Dropdown -->
+      <li class="has-dropdown">
+        <a href="#properties" class="nav-link">Size <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <div class="dropdown-menu">
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="1200">1200 sqft</a>
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="1500">1500 sqft</a>
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="1800">1800 sqft</a>
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="2200">2200 sqft</a>
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="Duplex">Duplex</a>
+          <a href="#properties" class="dropdown-item" data-filter="size" data-value="Commercial">Commercial</a>
+        </div>
+      </li>
+
+      <li><a href="#contact" class="nav-link">Contact</a></li>
+    </ul>
+
+    <!-- RIGHT: Login + Hamburger -->
+    <div class="nav-actions">
+      <button class="btn-login" id="openLoginModal"><i class="fas fa-user"></i> Login</button>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===================== HERO SLIDER ===================== -->
+<section class="hero" id="home">
+  <div class="hero-slides" id="heroSlides">
+    <!-- Slides injected by JS -->
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content" id="heroContent">
+    <div class="hero-tag">Premium Real Estate</div>
+    <h1 class="hero-title" id="heroTitle">Building Future <span class="gold">Luxury</span></h1>
+    <p class="hero-subtitle" id="heroSubtitle">Experience unmatched living with Starline Builders Ltd. — where architecture meets aspiration.</p>
+    <div class="hero-btns">
+      <a href="#properties" class="btn-primary" id="heroCta1">Explore Properties</a>
+      <a href="#contact" class="btn-outline" id="heroCta2">Book Consultation</a>
+    </div>
+  </div>
+  <div class="hero-controls">
+    <button class="hero-prev" id="heroPrev"><i class="fas fa-chevron-left"></i></button>
+    <div class="hero-dots" id="heroDots"></div>
+    <button class="hero-next" id="heroNext"><i class="fas fa-chevron-right"></i></button>
+  </div>
+  <div class="hero-scroll"><span></span><small>Scroll Down</small></div>
+</section>
+
+<!-- ===================== ABOUT ===================== -->
+<section class="about" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-visual">
+        <div class="about-img-wrap">
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80" alt="About Starline" class="about-img"/>
+          <div class="about-badge">
+            <span class="badge-num">25+</span>
+            <span class="badge-txt">Years of Excellence</span>
+          </div>
+        </div>
+      </div>
+      <div class="about-text" id="aboutText">
+        <div class="section-tag">Who We Are</div>
+        <h2 class="section-title">Crafting <span class="gold">Iconic</span> Spaces Since 1999</h2>
+        <p>STARLINE BUILDERS LTD. is Bangladesh's premier luxury real estate developer, delivering architectural masterpieces across Dhaka's most coveted addresses. With over two decades of trust, we transform dreams into landmark residences.</p>
+        <p>Our commitment to excellence, transparency, and on-time delivery has earned us the confidence of thousands of satisfied homeowners. Every project is a testament to our passion for premium living.</p>
+        <div class="about-mission">
+          <div class="mission-item">
+            <i class="fas fa-bullseye gold"></i>
+            <div>
+              <strong>Our Mission</strong>
+              <p>To deliver world-class residential spaces that redefine urban luxury living in Bangladesh.</p>
+            </div>
+          </div>
+          <div class="mission-item">
+            <i class="fas fa-eye gold"></i>
+            <div>
+              <strong>Our Vision</strong>
+              <p>To be the most trusted and innovative real estate brand in South Asia by 2030.</p>
+            </div>
+          </div>
+        </div>
+        <div class="counters">
+          <div class="counter-item">
+            <span class="counter-num" data-target="250">0</span><span class="gold">+</span>
+            <span class="counter-label">Projects Completed</span>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-target="5000">0</span><span class="gold">+</span>
+            <span class="counter-label">Happy Families</span>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-target="25">0</span><span class="gold">+</span>
+            <span class="counter-label">Years Experience</span>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-target="12">0</span><span class="gold">+</span>
+            <span class="counter-label">Prime Locations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROPERTIES ===================== -->
+<section class="properties" id="properties">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Our Portfolio</div>
+      <h2 class="section-title">Premium <span class="gold">Properties</span></h2>
+      <p class="section-desc">Discover our handpicked selection of luxury residential and commercial developments.</p>
+    </div>
+
+    <!-- Active Filters -->
+    <div class="active-filters" id="activeFilters"></div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All Properties</button>
+      <button class="filter-tab" data-filter="ongoing">Ongoing</button>
+      <button class="filter-tab" data-filter="handover">Handover</button>
+      <button class="filter-tab" data-filter="processing">Processing</button>
+      <button class="filter-tab" data-filter="upcoming">Upcoming</button>
+      <button class="filter-tab" data-filter="featured">Featured</button>
+    </div>
+
+    <div class="properties-grid" id="propertiesGrid">
+      <!-- Cards injected by JS -->
+    </div>
+    <div class="no-results" id="noResults" style="display:none">
+      <i class="fas fa-building" style="font-size:3rem;color:var(--gold)"></i>
+      <p>No properties match your filter. Try a different category.</p>
+      <button class="btn-primary" onclick="resetFilters()">Show All</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHY CHOOSE ===================== -->
+<section class="why-choose" id="why">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Why Us</div>
+      <h2 class="section-title">Why Choose <span class="gold">Starline</span></h2>
+      <p class="section-desc">We set the benchmark for luxury real estate development in Bangladesh.</p>
+    </div>
+    <div class="why-grid" id="whyGrid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONTACT ===================== -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Get In Touch</div>
+      <h2 class="section-title">Contact <span class="gold">Us</span></h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info" id="contactInfo">
+        <div class="contact-detail">
+          <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+          <div>
+            <h4>Our Office</h4>
+            <p id="contactAddress">House #12, Road #5, Gulshan-2, Dhaka-1212, Bangladesh</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon"><i class="fas fa-phone-alt"></i></div>
+          <div>
+            <h4>Phone</h4>
+            <p id="contactPhone">+880-1700-000000 | +880-2-9876543</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+          <div>
+            <h4>Email</h4>
+            <p id="contactEmail">info@starlinebuilders.com</p>
+          </div>
+        </div>
+        <div class="contact-detail">
+          <div class="contact-icon"><i class="fas fa-clock"></i></div>
+          <div>
+            <h4>Office Hours</h4>
+            <p id="contactHours">Sat–Thu: 9:00 AM – 7:00 PM</p>
+          </div>
+        </div>
+        <div class="map-preview">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.4!2d90.4152!3d23.7925!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDQ3JzMzLjAiTiA5MMKwMjQnNTQuNyJF!5e0!3m2!1sen!2sbd!4v1" allowfullscreen="" loading="lazy" style="border:0"></iframe>
+        </div>
+      </div>
+      <div class="contact-form-wrap">
+        <h3>Send an <span class="gold">Enquiry</span></h3>
+        <form class="contact-form" id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <input type="text" placeholder="Your Full Name" required/>
+              <i class="fas fa-user form-icon"></i>
+            </div>
+            <div class="form-group">
+              <input type="tel" placeholder="Phone Number" required/>
+              <i class="fas fa-phone form-icon"></i>
+            </div>
+          </div>
+          <div class="form-group">
+            <input type="email" placeholder="Email Address" required/>
+            <i class="fas fa-envelope form-icon"></i>
+          </div>
+          <div class="form-group">
+            <select>
+              <option value="" disabled selected>Select Property Interest</option>
+              <option>1200 sqft Apartment</option>
+              <option>1500 sqft Apartment</option>
+              <option>1800 sqft Apartment</option>
+              <option>2200 sqft Apartment</option>
+              <option>Duplex</option>
+              <option>Commercial Space</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <textarea rows="4" placeholder="Your Message..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary full-width">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer" id="footer">
+  <div class="footer-top">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline" class="footer-logo-img" onerror="this.style.display='none'"/>
+            <span class="footer-brand-name" id="footerBrandName">STARLINE BUILDERS LTD.</span>
+          </div>
+          <p class="footer-desc" id="footerDesc">Invest Smart. Live Better. Delivering premium real estate experiences across Bangladesh's most prestigious addresses.</p>
+          <div class="social-links" id="socialLinks">
+            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Properties</h4>
+          <ul>
+            <li><a href="#properties">Ongoing Projects</a></li>
+            <li><a href="#properties">Handover Projects</a></li>
+            <li><a href="#properties">Upcoming Projects</a></li>
+            <li><a href="#properties">Featured Properties</a></li>
+            <li><a href="#properties">Commercial Spaces</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#about">About Us</a></li>
+            <li><a href="#why">Why Choose Us</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms & Conditions</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contact Info</h4>
+          <ul class="contact-list">
+            <li><i class="fas fa-map-marker-alt"></i> Gulshan-2, Dhaka</li>
+            <li><i class="fas fa-phone"></i> +880-1700-000000</li>
+            <li><i class="fas fa-envelope"></i> info@starlinebuilders.com</li>
+            <li><i class="fas fa-clock"></i> Sat–Thu: 9AM – 7PM</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <p id="footerCopyright">© 2025 STARLINE BUILDERS LTD. All Rights Reserved. | <a href="#">Privacy Policy</a></p>
+    </div>
+  </div>
+</footer>
+
+<!-- BACK TO TOP -->
+<button class="back-to-top" id="backToTop"><i class="fas fa-chevron-up"></i></button>
+
+<!-- ===================== LOGIN MODAL ===================== -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box login-modal">
+    <button class="modal-close" id="closeLoginModal"><i class="fas fa-times"></i></button>
+    <div class="login-tabs">
+      <button class="login-tab active" data-tab="customer">Customer</button>
+      <button class="login-tab" data-tab="admin">Admin</button>
+      <button class="login-tab" data-tab="register">Register</button>
+    </div>
+
+    <!-- Customer Login -->
+    <div class="login-panel active" id="panelCustomer">
+      <div class="login-header">
+        <img src="/mnt/user-data/uploads/company_.jpeg" alt="" class="login-logo" onerror="this.style.display='none'"/>
+        <h3>Customer Login</h3>
+      </div>
+      <form id="customerLoginForm">
+        <div class="form-group">
+          <input type="email" placeholder="Email Address" id="custEmail" required/>
+          <i class="fas fa-envelope form-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Password" id="custPass" required/>
+          <i class="fas fa-lock form-icon"></i>
+        </div>
+        <button type="submit" class="btn-primary full-width">Login</button>
+        <p class="form-switch">Don't have an account? <a href="#" onclick="switchTab('register')">Register</a></p>
+      </form>
+    </div>
+
+    <!-- Admin Login -->
+    <div class="login-panel" id="panelAdmin">
+      <div class="login-header">
+        <i class="fas fa-shield-alt" style="font-size:2rem;color:var(--gold)"></i>
+        <h3>Super Admin Login</h3>
+      </div>
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <input type="text" placeholder="Admin Username" id="adminUser" required/>
+          <i class="fas fa-user-shield form-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Admin Password" id="adminPass" required/>
+          <i class="fas fa-lock form-icon"></i>
+        </div>
+        <div class="login-hint">Default: admin / starline2025</div>
+        <button type="submit" class="btn-primary full-width">Access Dashboard</button>
+      </form>
+    </div>
+
+    <!-- Register -->
+    <div class="login-panel" id="panelRegister">
+      <div class="login-header">
+        <i class="fas fa-user-plus" style="font-size:2rem;color:var(--gold)"></i>
+        <h3>Create Account</h3>
+      </div>
+      <form id="registerForm">
+        <div class="form-group">
+          <input type="text" placeholder="Full Name" id="regName" required/>
+          <i class="fas fa-user form-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="email" placeholder="Email Address" id="regEmail" required/>
+          <i class="fas fa-envelope form-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="tel" placeholder="Phone Number" id="regPhone" required/>
+          <i class="fas fa-phone form-icon"></i>
+        </div>
+        <div class="form-group">
+          <input type="password" placeholder="Password" id="regPass" required/>
+          <i class="fas fa-lock form-icon"></i>
+        </div>
+        <button type="submit" class="btn-primary full-width">Create Account</button>
+        <p class="form-switch">Already have an account? <a href="#" onclick="switchTab('customer')">Login</a></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PROPERTY DETAIL MODAL ===================== -->
+<div class="modal-overlay" id="propertyModal">
+  <div class="modal-box property-modal">
+    <button class="modal-close" id="closePropertyModal"><i class="fas fa-times"></i></button>
+    <div class="property-modal-inner" id="propertyModalContent">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN DASHBOARD ===================== -->
+<div class="admin-dashboard" id="adminDashboard">
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="" class="admin-logo-img" onerror="this.style.display='none'"/>
+      <span>Admin Panel</span>
+    </div>
+    <ul class="admin-menu">
+      <li><a href="#" class="admin-nav active" data-panel="dashOverview"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashProperties"><i class="fas fa-building"></i> Properties</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashHero"><i class="fas fa-images"></i> Hero Slider</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashAbout"><i class="fas fa-info-circle"></i> About Section</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashWhy"><i class="fas fa-star"></i> Why Choose</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashContact"><i class="fas fa-address-book"></i> Contact</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashFooter"><i class="fas fa-shoe-prints"></i> Footer</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashUsers"><i class="fas fa-users"></i> Users</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashMessages"><i class="fas fa-envelope"></i> Messages</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashTheme"><i class="fas fa-palette"></i> Theme</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashNavbar"><i class="fas fa-bars"></i> Navbar</a></li>
+    </ul>
+    <button class="admin-logout" id="adminLogout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+
+  <div class="admin-content" id="adminContent">
+    <div class="admin-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+      <h2 class="admin-page-title" id="adminPageTitle">Dashboard Overview</h2>
+      <div class="admin-user-info"><i class="fas fa-user-circle"></i> Super Admin</div>
+    </div>
+
+    <!-- Overview Panel -->
+    <div class="admin-panel active" id="dashOverview">
+      <div class="stats-grid">
+        <div class="stat-card"><i class="fas fa-building"></i><div><span class="stat-num" id="statProperties">0</span><span>Total Properties</span></div></div>
+        <div class="stat-card"><i class="fas fa-users"></i><div><span class="stat-num" id="statUsers">0</span><span>Total Users</span></div></div>
+        <div class="stat-card"><i class="fas fa-envelope"></i><div><span class="stat-num" id="statMessages">0</span><span>Messages</span></div></div>
+        <div class="stat-card"><i class="fas fa-star"></i><div><span class="stat-num" id="statFeatured">0</span><span>Featured</span></div></div>
+      </div>
+      <div class="admin-section-title">Quick Stats</div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <h4>Properties by Status</h4>
+          <canvas id="statusChart" width="400" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <h4>Properties by Location</h4>
+          <canvas id="locationChart" width="400" height="220"></canvas>
+        </div>
+      </div>
+      <div class="admin-section-title">Recent Activity</div>
+      <div class="activity-list" id="activityList"></div>
+    </div>
+
+    <!-- Properties Panel -->
+    <div class="admin-panel" id="dashProperties">
+      <div class="panel-header">
+        <h3>Property Management</h3>
+        <button class="btn-primary" id="addPropertyBtn"><i class="fas fa-plus"></i> Add Property</button>
+      </div>
+
+      <!-- Add/Edit Property Form -->
+      <div class="admin-form-card" id="propertyFormCard" style="display:none">
+        <h4 id="propertyFormTitle">Add New Property</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Property Name</label><input type="text" id="propName" placeholder="e.g. Starline Meridian"/></div>
+          <div class="form-group"><label>Location</label>
+            <select id="propLocation">
+              <option>Gulshan</option><option>Banani</option><option>Bashundhara</option>
+              <option>Dhanmondi</option><option>Uttara</option><option>Mirpur</option><option>Purbachal</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="propStatus">
+              <option value="ongoing">Ongoing</option><option value="handover">Handover</option>
+              <option value="processing">Processing</option><option value="upcoming">Upcoming</option>
+              <option value="featured">Featured</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Size</label>
+            <select id="propSize">
+              <option value="1200">1200 sqft</option><option value="1500">1500 sqft</option>
+              <option value="1800">1800 sqft</option><option value="2200">2200 sqft</option>
+              <option value="Duplex">Duplex</option><option value="Commercial">Commercial</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Price (BDT)</label><input type="text" id="propPrice" placeholder="e.g. 1.2 Cr"/></div>
+          <div class="form-group"><label>Image URL</label><input type="text" id="propImage" placeholder="https://..."/></div>
+          <div class="form-group full"><label>Description</label><textarea id="propDesc" rows="3" placeholder="Property description..."></textarea></div>
+          <div class="form-group full"><label>Amenities (comma separated)</label><input type="text" id="propAmenities" placeholder="Swimming Pool, Gym, Parking, Rooftop Garden..."/></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="savePropertyBtn">Save Property</button>
+          <button class="btn-outline" id="cancelPropertyBtn">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Properties Table -->
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="propertiesTable">
+          <thead><tr><th>Image</th><th>Name</th><th>Location</th><th>Status</th><th>Size</th><th>Price</th><th>Actions</th></tr></thead>
+          <tbody id="propertiesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Hero Panel -->
+    <div class="admin-panel" id="dashHero">
+      <div class="panel-header"><h3>Hero Slider Management</h3></div>
+      <div class="admin-form-card">
+        <h4>Edit Hero Text</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>Hero Title</label><input type="text" id="editHeroTitle" placeholder="Building Future Luxury"/></div>
+          <div class="form-group full"><label>Hero Subtitle</label><textarea id="editHeroSubtitle" rows="2"></textarea></div>
+          <div class="form-group"><label>CTA Button 1 Text</label><input type="text" id="editCta1"/></div>
+          <div class="form-group"><label>CTA Button 2 Text</label><input type="text" id="editCta2"/></div>
+        </div>
+        <button class="btn-primary" id="saveHeroBtn">Save Hero Settings</button>
+      </div>
+      <div class="admin-form-card">
+        <h4>Slider Images</h4>
+        <p style="color:var(--text-muted);margin-bottom:1rem">Current slides use high-quality Unsplash images. Add custom image URLs below:</p>
+        <div class="form-group full"><label>Add Custom Slide Image URL</label>
+          <div style="display:flex;gap:1rem">
+            <input type="text" id="newSlideUrl" placeholder="https://..."/>
+            <button class="btn-primary" id="addSlideBtn">Add</button>
+          </div>
+        </div>
+        <div class="slides-preview" id="slidesPreview"></div>
+      </div>
+    </div>
+
+    <!-- About Panel -->
+    <div class="admin-panel" id="dashAbout">
+      <div class="admin-form-card">
+        <h4>Edit About Section</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>About Title</label><input type="text" id="editAboutTitle" value="Crafting Iconic Spaces Since 1999"/></div>
+          <div class="form-group full"><label>About Text (Paragraph 1)</label><textarea id="editAboutP1" rows="3"></textarea></div>
+          <div class="form-group full"><label>About Text (Paragraph 2)</label><textarea id="editAboutP2" rows="3"></textarea></div>
+          <div class="form-group"><label>Mission Text</label><textarea id="editMission" rows="2"></textarea></div>
+          <div class="form-group"><label>Vision Text</label><textarea id="editVision" rows="2"></textarea></div>
+        </div>
+        <button class="btn-primary" id="saveAboutBtn">Save About Section</button>
+      </div>
+    </div>
+
+    <!-- Why Choose Panel -->
+    <div class="admin-panel" id="dashWhy">
+      <div class="panel-header">
+        <h3>Why Choose Cards</h3>
+        <button class="btn-primary" id="addWhyBtn"><i class="fas fa-plus"></i> Add Card</button>
+      </div>
+      <div class="admin-form-card" id="whyFormCard" style="display:none">
+        <h4 id="whyFormTitle">Add Why Card</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Icon (FA class)</label><input type="text" id="whyIcon" placeholder="fas fa-shield-alt"/></div>
+          <div class="form-group"><label>Title</label><input type="text" id="whyTitle" placeholder="Trusted Company"/></div>
+          <div class="form-group full"><label>Description</label><textarea id="whyDesc" rows="2"></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveWhyBtn">Save Card</button>
+          <button class="btn-outline" id="cancelWhyBtn">Cancel</button>
+        </div>
+      </div>
+      <div class="why-admin-list" id="whyAdminList"></div>
+    </div>
+
+    <!-- Contact Panel -->
+    <div class="admin-panel" id="dashContact">
+      <div class="admin-form-card">
+        <h4>Edit Contact Information</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>Office Address</label><input type="text" id="editAddress"/></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="editPhone"/></div>
+          <div class="form-group"><label>Email</label><input type="text" id="editEmail"/></div>
+          <div class="form-group full"><label>Office Hours</label><input type="text" id="editHours"/></div>
+        </div>
+        <button class="btn-primary" id="saveContactBtn">Save Contact Info</button>
+      </div>
+      <div class="admin-section-title">Enquiry Submissions</div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Interest</th><th>Message</th></tr></thead>
+          <tbody id="enquiriesTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No enquiries yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer Panel -->
+    <div class="admin-panel" id="dashFooter">
+      <div class="admin-form-card">
+        <h4>Edit Footer</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>Footer Description</label><textarea id="editFooterDesc" rows="3"></textarea></div>
+          <div class="form-group full"><label>Copyright Text</label><input type="text" id="editCopyright"/></div>
+        </div>
+        <button class="btn-primary" id="saveFooterBtn">Save Footer</button>
+      </div>
+    </div>
+
+    <!-- Users Panel -->
+    <div class="admin-panel" id="dashUsers">
+      <div class="panel-header"><h3>User Management</h3></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="usersTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No registered users yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Messages Panel -->
+    <div class="admin-panel" id="dashMessages">
+      <div class="panel-header"><h3>Contact Messages</h3></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Interest</th><th>Message</th><th>Date</th></tr></thead>
+          <tbody id="messagesTableBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No messages yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Theme Panel -->
+    <div class="admin-panel" id="dashTheme">
+      <div class="admin-form-card">
+        <h4>Theme Customization</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Gold Accent Color</label><input type="color" id="themeGold" value="#c9a84c"/></div>
+          <div class="form-group"><label>Primary Background</label><input type="color" id="themeBg" value="#0a0a0a"/></div>
+          <div class="form-group"><label>Secondary Background</label><input type="color" id="themeBg2" value="#111111"/></div>
+          <div class="form-group"><label>Card Background</label><input type="color" id="themeCard" value="#161616"/></div>
+          <div class="form-group"><label>Text Color</label><input type="color" id="themeText" value="#e8e8e8"/></div>
+          <div class="form-group"><label>Heading Font</label>
+            <select id="themeFont">
+              <option value="'Cormorant Garamond', serif">Cormorant Garamond (Current)</option>
+              <option value="'Playfair Display', serif">Playfair Display</option>
+              <option value="'Montserrat', sans-serif">Montserrat</option>
+              <option value="'Georgia', serif">Georgia</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveThemeBtn">Apply Theme</button>
+          <button class="btn-outline" id="resetThemeBtn">Reset Default</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navbar Panel -->
+    <div class="admin-panel" id="dashNavbar">
+      <div class="admin-form-card">
+        <h4>Edit Navbar</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>Brand Name</label><input type="text" id="editBrandName" value="STARLINE BUILDERS LTD."/></div>
+        </div>
+        <button class="btn-primary" id="saveNavbarBtn">Save Navbar</button>
+      </div>
+    </div>
+
+  </div><!-- end admin-content -->
+</div><!-- end admin-dashboard -->
+
+<!-- SUCCESS TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
