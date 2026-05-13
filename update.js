@@ -1,153 +1,9 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCheuIzO0Ue-A70Fd0tsZKg2uLqSiFZfic",
-  authDomain: "starline-builders.firebaseapp.com",
-  projectId: "starline-builders",
-  storageBucket: "starline-builders.firebasestorage.app",
-  messagingSenderId: "418376765574",
-  appId: "1:418376765574:web:04c8b51e60e5eba92ec107",
-  measurementId: "G-JWYER9FZ07"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-
-
 /* =========================================
    STARLINE BUILDERS LTD. — Script.js
    Full Dynamic CMS + Admin Dashboard
    ========================================= */
 
 'use strict';
-
-// =============================================
-// FIREBASE CONFIGURATION
-// ─────────────────────────────────────────────
-// HOW TO SETUP (one-time, 5 minutes):
-//
-// 1. Go to https://console.firebase.google.com
-// 2. Click "Add project" → name it "starline-builders" → Create
-// 3. Click "Firestore Database" → Create database → Start in TEST MODE → Done
-// 4. Click the gear ⚙ icon → Project Settings
-// 5. Under "Your apps" click </> (Web) → register app → copy the firebaseConfig
-// 6. Paste your values below replacing the placeholder values
-// 7. Done! All data will now sync across all devices in real-time.
-//
-// ⚠️ After setup, also go to Firestore → Rules → paste:
-//    rules_version = '2';
-//    service cloud.firestore {
-//      match /databases/{database}/documents {
-//        match /{document=**} { allow read, write: if true; }
-//      }
-//    }
-// =============================================
-
-const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
-};
-
-// ── Firebase init & DB reference ─────────────
-let db = null;
-let firebaseReady = false;
-
-function initFirebase() {
-  try {
-    // Check if config is filled in (not placeholder)
-    if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') {
-      console.warn('⚠ Firebase not configured — using localStorage only.');
-      firebaseReady = false;
-      return;
-    }
-    if (!firebase.apps.length) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-    }
-    db = firebase.firestore();
-    firebaseReady = true;
-    console.log('✓ Firebase connected — real-time sync enabled.');
-  } catch (e) {
-    console.warn('Firebase init failed, falling back to localStorage:', e);
-    firebaseReady = false;
-  }
-}
-
-// ── Universal DB helpers ──────────────────────
-// These wrap Firestore calls with localStorage fallback.
-// Collections: 'messages', 'users', 'properties', 'settings', 'slides', 'whycards', 'customoptions'
-
-async function dbSet(collection, docId, data) {
-  if (firebaseReady) {
-    try { await db.collection(collection).doc(String(docId)).set(data); return; } catch(e) { console.warn('dbSet failed:', e); }
-  }
-  // localStorage fallback
-  const key = `sl_fb_${collection}`;
-  const existing = JSON.parse(localStorage.getItem(key) || '{}');
-  existing[docId] = data;
-  localStorage.setItem(key, JSON.stringify(existing));
-}
-
-async function dbDelete(collection, docId) {
-  if (firebaseReady) {
-    try { await db.collection(collection).doc(String(docId)).delete(); return; } catch(e) { console.warn('dbDelete failed:', e); }
-  }
-  const key = `sl_fb_${collection}`;
-  const existing = JSON.parse(localStorage.getItem(key) || '{}');
-  delete existing[docId];
-  localStorage.setItem(key, JSON.stringify(existing));
-}
-
-async function dbGetAll(collection) {
-  if (firebaseReady) {
-    try {
-      const snap = await db.collection(collection).get();
-      return snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-    } catch(e) { console.warn('dbGetAll failed:', e); }
-  }
-  // localStorage fallback
-  const key = `sl_fb_${collection}`;
-  const existing = JSON.parse(localStorage.getItem(key) || '{}');
-  return Object.values(existing);
-}
-
-async function dbGetDoc(collection, docId) {
-  if (firebaseReady) {
-    try {
-      const snap = await db.collection(collection).doc(String(docId)).get();
-      return snap.exists ? snap.data() : null;
-    } catch(e) { console.warn('dbGetDoc failed:', e); }
-  }
-  const key = `sl_fb_${collection}`;
-  const existing = JSON.parse(localStorage.getItem(key) || '{}');
-  return existing[docId] || null;
-}
-
-// Real-time listener (only when Firebase is ready)
-function dbListen(collection, callback) {
-  if (!firebaseReady) return;
-  try {
-    db.collection(collection).onSnapshot(snap => {
-      const docs = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-      callback(docs);
-    });
-  } catch(e) { console.warn('dbListen failed:', e); }
-}
-
-// ── Single document (for settings, customOptions) ──
-async function dbSetSingle(docId, data) { return dbSet('siteconfig', docId, data); }
-async function dbGetSingle(docId) { return dbGetDoc('siteconfig', docId); }
 
 // =============================================
 // DEFAULT DATA
@@ -248,137 +104,24 @@ function loadCustomOptions() {
 function saveCustomOptions() { localStorage.setItem('sl_custom_options', JSON.stringify(customOptions)); }
 
 // =============================================
-// DATA LAYER — Firebase + localStorage fallback
+// LOCALSTORAGE HELPERS
 // =============================================
-
-async function loadData() {
-  // Always load from localStorage first (instant, for display)
-  properties  = JSON.parse(localStorage.getItem('sl_properties') || 'null') || DEFAULT_PROPERTIES;
-  heroSlides  = JSON.parse(localStorage.getItem('sl_slides')     || 'null') || DEFAULT_HERO_SLIDES;
-  whyCards    = JSON.parse(localStorage.getItem('sl_why')        || 'null') || DEFAULT_WHY_CARDS;
-  settings    = JSON.parse(localStorage.getItem('sl_settings')   || 'null') || { ...DEFAULT_SETTINGS };
-  users       = JSON.parse(localStorage.getItem('sl_users')      || '[]');
-  messages    = JSON.parse(localStorage.getItem('sl_messages')   || '[]');
+function loadData() {
+  properties = JSON.parse(localStorage.getItem('sl_properties') || 'null') || DEFAULT_PROPERTIES;
+  heroSlides = JSON.parse(localStorage.getItem('sl_slides') || 'null') || DEFAULT_HERO_SLIDES;
+  whyCards = JSON.parse(localStorage.getItem('sl_why') || 'null') || DEFAULT_WHY_CARDS;
+  settings = JSON.parse(localStorage.getItem('sl_settings') || 'null') || { ...DEFAULT_SETTINGS };
+  users = JSON.parse(localStorage.getItem('sl_users') || '[]');
+  messages = JSON.parse(localStorage.getItem('sl_messages') || '[]');
   loadCustomOptions();
-
-  // Then try Firebase (overrides localStorage with latest cloud data)
-  if (firebaseReady) {
-    try {
-      const [fbProps, fbUsers, fbMsgs, fbSettings, fbSlides, fbWhy, fbOpts] = await Promise.all([
-        dbGetAll('properties'),
-        dbGetAll('users'),
-        dbGetAll('messages'),
-        dbGetSingle('settings'),
-        dbGetSingle('slides'),
-        dbGetSingle('whycards'),
-        dbGetSingle('customoptions'),
-      ]);
-
-      if (fbProps  && fbProps.length)  { properties = fbProps.sort((a,b) => (a.id||0)-(b.id||0)); localStorage.setItem('sl_properties', JSON.stringify(properties)); }
-      if (fbUsers  && fbUsers.length)  { users      = fbUsers.sort((a,b) => (a.id||0)-(b.id||0)); localStorage.setItem('sl_users',      JSON.stringify(users)); }
-      if (fbMsgs   && fbMsgs.length)   { messages   = fbMsgs.sort((a,b)  => (a.id||0)-(b.id||0)); localStorage.setItem('sl_messages',   JSON.stringify(messages)); }
-      if (fbSettings)                  { settings   = fbSettings;  localStorage.setItem('sl_settings', JSON.stringify(settings)); }
-      if (fbSlides  && fbSlides.urls)  { heroSlides = fbSlides.urls; localStorage.setItem('sl_slides',   JSON.stringify(heroSlides)); }
-      if (fbWhy     && fbWhy.cards)    { whyCards   = fbWhy.cards;  localStorage.setItem('sl_why',       JSON.stringify(whyCards)); }
-      if (fbOpts)                      { customOptions = { locations: fbOpts.locations || customOptions.locations, statuses: fbOpts.statuses || customOptions.statuses, sizes: fbOpts.sizes || customOptions.sizes }; localStorage.setItem('sl_custom_options', JSON.stringify(customOptions)); }
-
-      console.log('✓ Data loaded from Firebase.');
-    } catch(e) {
-      console.warn('Firebase data load failed, using localStorage:', e);
-    }
-  }
 }
 
-// ── Save functions (Firebase + localStorage) ─
-async function saveProperties() {
-  localStorage.setItem('sl_properties', JSON.stringify(properties));
-  if (firebaseReady) {
-    // Save each property as its own Firestore document
-    for (const p of properties) {
-      await dbSet('properties', p.id, p);
-    }
-  }
-}
-
-async function saveUsers() {
-  localStorage.setItem('sl_users', JSON.stringify(users));
-  if (firebaseReady) {
-    for (const u of users) {
-      await dbSet('users', u.id, u);
-    }
-  }
-}
-
-async function saveMessages() {
-  localStorage.setItem('sl_messages', JSON.stringify(messages));
-  if (firebaseReady) {
-    for (const m of messages) {
-      await dbSet('messages', m.id, m);
-    }
-  }
-}
-
-async function saveSettings() {
-  localStorage.setItem('sl_settings', JSON.stringify(settings));
-  if (firebaseReady) {
-    await dbSetSingle('settings', settings);
-  }
-}
-
-async function saveSlides() {
-  localStorage.setItem('sl_slides', JSON.stringify(heroSlides));
-  if (firebaseReady) {
-    await dbSetSingle('slides', { urls: heroSlides });
-  }
-}
-
-async function saveWhy() {
-  localStorage.setItem('sl_why', JSON.stringify(whyCards));
-  if (firebaseReady) {
-    await dbSetSingle('whycards', { cards: whyCards });
-  }
-}
-
-async function saveCustomOptions() {
-  localStorage.setItem('sl_custom_options', JSON.stringify(customOptions));
-  if (firebaseReady) {
-    await dbSetSingle('customoptions', customOptions);
-  }
-}
-
-// ── Real-time listeners (admin dashboard) ────
-function startRealtimeListeners() {
-  if (!firebaseReady) return;
-
-  // Messages: update admin table live when new message arrives
-  dbListen('messages', docs => {
-    messages = docs.sort((a,b) => (a.id||0)-(b.id||0));
-    localStorage.setItem('sl_messages', JSON.stringify(messages));
-    if (adminLoggedIn) {
-      refreshAdminData();
-      // Flash notification
-      const count = document.getElementById('statMessages');
-      if (count) count.style.color = 'var(--gold)';
-      setTimeout(() => { if(count) count.style.color = ''; }, 2000);
-    }
-  });
-
-  // Users: update admin table live when new user registers
-  dbListen('users', docs => {
-    users = docs.sort((a,b) => (a.id||0)-(b.id||0));
-    localStorage.setItem('sl_users', JSON.stringify(users));
-    if (adminLoggedIn) refreshAdminData();
-  });
-
-  // Properties: update website live when admin adds/edits
-  dbListen('properties', docs => {
-    if (!docs.length) return;
-    properties = docs.sort((a,b) => (a.id||0)-(b.id||0));
-    localStorage.setItem('sl_properties', JSON.stringify(properties));
-    renderProperties();
-    if (adminLoggedIn) { renderAdminProperties(); refreshAdminData(); }
-  });
-}
+function saveProperties() { localStorage.setItem('sl_properties', JSON.stringify(properties)); }
+function saveSlides() { localStorage.setItem('sl_slides', JSON.stringify(heroSlides)); }
+function saveWhy() { localStorage.setItem('sl_why', JSON.stringify(whyCards)); }
+function saveSettings() { localStorage.setItem('sl_settings', JSON.stringify(settings)); }
+function saveUsers() { localStorage.setItem('sl_users', JSON.stringify(users)); }
+function saveMessages() { localStorage.setItem('sl_messages', JSON.stringify(messages)); }
 
 // =============================================
 // LOADER
@@ -1239,7 +982,6 @@ window.deleteProperty = function(id) {
   if (!confirm('Delete this property? This cannot be undone.')) return;
   properties = properties.filter(p => p.id !== id);
   saveProperties();
-  if (firebaseReady) dbDelete('properties', id);
   renderAdminProperties();
   renderProperties();
   refreshAdminData();
@@ -1523,57 +1265,28 @@ document.getElementById('saveThemeBtn').addEventListener('click', () => {
 
 document.getElementById('resetThemeBtn').addEventListener('click', () => {
   settings.themeGold = DEFAULT_SETTINGS.themeGold;
-  settings.themeBg   = DEFAULT_SETTINGS.themeBg;
-  settings.themeBg2  = DEFAULT_SETTINGS.themeBg2;
+  settings.themeBg = DEFAULT_SETTINGS.themeBg;
+  settings.themeBg2 = DEFAULT_SETTINGS.themeBg2;
   settings.themeCard = DEFAULT_SETTINGS.themeCard;
   settings.themeText = DEFAULT_SETTINGS.themeText;
   settings.themeFont = DEFAULT_SETTINGS.themeFont;
   saveSettings();
   applyTheme();
-  // Update color picker UI
-  document.getElementById('themeGold').value = DEFAULT_SETTINGS.themeGold;
-  document.getElementById('themeBg').value   = DEFAULT_SETTINGS.themeBg;
-  document.getElementById('themeBg2').value  = DEFAULT_SETTINGS.themeBg2;
-  document.getElementById('themeCard').value = DEFAULT_SETTINGS.themeCard;
-  document.getElementById('themeText').value = DEFAULT_SETTINGS.themeText;
-  document.getElementById('themeFont').value = DEFAULT_SETTINGS.themeFont;
-  showToast('✓ Theme reset to default dark luxury!');
+  populateAdminForms();
+  showToast('✓ Theme reset to default!');
 });
 
 function applyTheme() {
   const root = document.documentElement;
-
-  // Safety: if a saved bg color is too light (likely accidental), reset it
-  function isTooDark(hex) { return true; } // allow all
-  function isTooLight(hex) {
-    if (!hex || !hex.startsWith('#')) return false;
-    try {
-      const r = parseInt(hex.slice(1,3),16);
-      const g = parseInt(hex.slice(3,5),16);
-      const b = parseInt(hex.slice(5,7),16);
-      const brightness = (r*299 + g*587 + b*114) / 1000;
-      return brightness > 180; // too light for dark theme
-    } catch { return false; }
-  }
-
-  // If saved bg colors are too light, auto-reset to defaults
-  if (isTooLight(settings.themeBg) || isTooLight(settings.themeBg2) || isTooLight(settings.themeCard)) {
-    settings.themeBg   = DEFAULT_SETTINGS.themeBg;
-    settings.themeBg2  = DEFAULT_SETTINGS.themeBg2;
-    settings.themeCard = DEFAULT_SETTINGS.themeCard;
-    saveSettings();
-    showToast('⚠ Background colors reset to dark defaults.');
-  }
-
   if (settings.themeGold) {
     root.style.setProperty('--gold', settings.themeGold);
-    root.style.setProperty('--gold-light', settings.themeGold + 'dd');
+    // Recompute gradients with new gold
     root.style.setProperty('--gold-gradient', `linear-gradient(135deg, ${settings.themeGold}, #f0d080, ${settings.themeGold})`);
   }
-  if (settings.themeBg)   root.style.setProperty('--bg',       settings.themeBg);
-  if (settings.themeBg2)  root.style.setProperty('--bg2',      settings.themeBg2);
-  if (settings.themeCard) root.style.setProperty('--card-bg',  settings.themeCard);
-  if (settings.themeText) root.style.setProperty('--text',     settings.themeText);
+  if (settings.themeBg) root.style.setProperty('--bg', settings.themeBg);
+  if (settings.themeBg2) root.style.setProperty('--bg2', settings.themeBg2);
+  if (settings.themeCard) root.style.setProperty('--card-bg', settings.themeCard);
+  if (settings.themeText) root.style.setProperty('--text', settings.themeText);
   if (settings.themeFont) root.style.setProperty('--heading-font', settings.themeFont);
 }
 
@@ -1909,7 +1622,6 @@ window.deleteUser = function(id) {
   if (!confirm('Delete this user?')) return;
   users = users.filter(u => u.id !== id);
   saveUsers();
-  if (firebaseReady) dbDelete('users', id);
   renderAdminUsers();
   refreshAdminData();
   showToast('✓ User deleted.');
@@ -2231,21 +1943,6 @@ function buildAdminTopbar() {
       <span id="atbTimeStr">--:--</span>
     </div>
 
-    <!-- Firebase status -->
-    <div id="atbFirebaseStatus" style="
-      display:flex;align-items:center;gap:0.4rem;
-      padding:0.3rem 0.8rem;border-radius:50px;
-      font-size:0.68rem;font-weight:700;letter-spacing:1px;
-      margin-right:0.8rem;
-      background:${firebaseReady ? 'rgba(34,197,94,0.12)' : 'rgba(245,158,11,0.12)'};
-      border:1px solid ${firebaseReady ? 'rgba(34,197,94,0.3)' : 'rgba(245,158,11,0.3)'};
-      color:${firebaseReady ? '#22c55e' : '#f59e0b'};
-      white-space:nowrap;
-    " title="${firebaseReady ? 'Real-time sync active' : 'Firebase not configured — using localStorage'}">
-      <i class="fas fa-${firebaseReady ? 'cloud' : 'hdd'}"></i>
-      ${firebaseReady ? 'Cloud Sync ON' : 'Local Mode'}
-    </div>
-
     <!-- Profile dropdown -->
     <div class="atb-profile-wrap">
       <div class="atb-profile-btn" id="atbProfileBtn">
@@ -2397,17 +2094,9 @@ function fixMessageTableHeaders() {
 // =============================================
 // INIT
 // =============================================
-document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Init Firebase first
-  initFirebase();
-
-  // 2. Show loader while fetching data
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
   runLoader();
-
-  // 3. Load data (Firebase or localStorage)
-  await loadData();
-
-  // 4. Init UI
   initNavbar();
   initHeroSlider();
   renderProperties();
@@ -2425,13 +2114,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   setTimeout(initReveal, 100);
 
-  // 5. Start real-time listeners
-  startRealtimeListeners();
-
-  // 6. Restore admin session after refresh
+  // ── Restore admin session after refresh ──
   if (sessionStorage.getItem('sl_admin_session') === '1') {
     adminLoggedIn = true;
-    setTimeout(() => openAdminDashboard(), 300);
+    // Small delay so DOM is fully ready
+    setTimeout(() => openAdminDashboard(), 200);
   }
 });
 

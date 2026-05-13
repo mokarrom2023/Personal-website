@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
-  <link rel="icon" type="image/png" href="company .jpeg">
   <link rel="stylesheet" href="Style.css">
 </head>
 <body>
@@ -20,8 +19,8 @@
 <div class="loader" id="loader">
   <div class="loader-inner">
     <div class="loader-logo">
-      <img src="company .jpeg" alt="Starline Builders" onerror="this.style.display='none'"/>
-      <div class="loader-brand">STARLINE BUILDERS LTD. </div>
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline Builders" onerror="this.style.display='none'"/>
+      <div class="loader-brand">STARLINE BUILDERS LTD.</div>
     </div>
     <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
     <div class="loader-text">Loading Excellence...</div>
@@ -33,10 +32,11 @@
   <div class="nav-container">
     <!-- LEFT: Logo -->
     <div class="nav-logo" id="navLogoArea">
-      <img src="company .jpeg" alt="Starline Builders" class="logo-img" id="navLogoImg" onerror="this.style.display='none'"/>
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline Builders" class="logo-img" id="navLogoImg" onerror="this.style.display='none'"/>
       <div class="nav-brand">
+        <span class="brand-star">★</span>
         <span class="brand-name" id="navBrandName">STARLINE BUILDERS LTD.</span>
-   </div>
+      </div>
     </div>
 
     <!-- CENTER: Menu -->
@@ -717,6 +717,10 @@
 
 <!-- SUCCESS TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- Firebase SDK (v9 compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script src="script.js"></script>
 </body>
