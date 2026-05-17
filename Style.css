@@ -170,9 +170,22 @@ button { cursor: pointer; }
   width: 48px; height: 48px; object-fit: contain;
   border-radius: 50%; border: 1px solid var(--border-hover);
 }
-.nav-brand {
-  display: flex; align-items: center; gap: 0.3rem;
+.nav-brand span:last-child  {
+  display: flex;
+  flex-direction: column;  
+  align-items: flex-start; 
+  gap: 0.1rem;   
+  color: goldenrod;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  
 }
+
+  
+/* .nav-brand {
+  display: flex; align-items: center; gap: 0.3rem;
+} */
 .brand-star { color: var(--gold); font-size: 1.1rem; }
 .brand-name {
   font-family: var(--heading-font); font-size: 1.1rem;

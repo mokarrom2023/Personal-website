@@ -1,27 +1,3 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCheuIzO0Ue-A70Fd0tsZKg2uLqSiFZfic",
-  authDomain: "starline-builders.firebaseapp.com",
-  projectId: "starline-builders",
-  storageBucket: "starline-builders.firebasestorage.app",
-  messagingSenderId: "418376765574",
-  appId: "1:418376765574:web:04c8b51e60e5eba92ec107",
-  measurementId: "G-JWYER9FZ07"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-
-
 /* =========================================
    STARLINE BUILDERS LTD. — Script.js
    Full Dynamic CMS + Admin Dashboard
@@ -30,35 +6,9 @@ const analytics = getAnalytics(app);
 'use strict';
 
 // =============================================
-// FIREBASE CONFIGURATION
-// ─────────────────────────────────────────────
-// HOW TO SETUP (one-time, 5 minutes):
-//
-// 1. Go to https://console.firebase.google.com
-// 2. Click "Add project" → name it "starline-builders" → Create
-// 3. Click "Firestore Database" → Create database → Start in TEST MODE → Done
-// 4. Click the gear ⚙ icon → Project Settings
-// 5. Under "Your apps" click </> (Web) → register app → copy the firebaseConfig
-// 6. Paste your values below replacing the placeholder values
-// 7. Done! All data will now sync across all devices in real-time.
-//
-// ⚠️ After setup, also go to Firestore → Rules → paste:
-//    rules_version = '2';
-//    service cloud.firestore {
-//      match /databases/{database}/documents {
-//        match /{document=**} { allow read, write: if true; }
-//      }
-//    }
+// FIREBASE — config is in firebase-config.js
+// FIREBASE_CONFIG variable comes from that file.
 // =============================================
-
-const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
-};
 
 // ── Firebase init & DB reference ─────────────
 let db = null;
@@ -2404,8 +2354,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 2. Show loader while fetching data
   runLoader();
 
-  // 3. Load data (Firebase or localStorage)
-  await loadData();
+  // 3. Load data with timeout — if Firebase hangs, continue after 4s
+  try {
+    await Promise.race([
+      loadData(),
+      new Promise(resolve => setTimeout(resolve, 4000)) // max 4s wait
+    ]);
+  } catch(e) {
+    console.warn('Data load error, continuing with localStorage:', e);
+  }
 
   // 4. Init UI
   initNavbar();
