@@ -4,23 +4,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>STARLINE BUILDERS LTD. – Invest Smart. Live Better.</title>
+  <link rel="icon" type="image/jpeg" href="company .jpeg"/>
+  <link rel="shortcut icon" type="image/jpeg" href="company .jpeg"/>
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
-  <link rel="icon" type="image/x-icon" href="company .jpeg">
-  <link rel="stylesheet" href="Style.css">
 </head>
 <body>
 
 <!-- SCROLL PROGRESS -->
 <div class="scroll-progress" id="scrollProgress"></div>
 
+<!-- TOP BAR -->
+<div class="top-bar" id="topBar">
+  <div class="top-bar-inner">
+    <!-- Left: Company name -->
+    <div class="top-bar-left">
+      <i class="fas fa-star" style="color:#fff;font-size:0.6rem;opacity:0.7"></i>
+      <span class="top-bar-company">STARLINE BUILDERS LTD.</span>
+    </div>
+    <!-- Center: Calendar + Clock -->
+    <div class="top-bar-center">
+      <div class="top-bar-datetime">
+        <i class="fas fa-calendar-alt"></i>
+        <span id="tbDate">--</span>
+      </div>
+      <div class="top-bar-sep"></div>
+      <div class="top-bar-datetime">
+        <i class="fas fa-clock"></i>
+        <span id="tbTime">--:--:--</span>
+      </div>
+    </div>
+    <!-- Right: Office hours + Language + Theme -->
+    <div class="top-bar-right">
+      <div class="top-bar-office" id="tbOfficeStatus">
+        <span class="tb-dot" id="tbDot"></span>
+        <span id="tbOfficeText">Office: 10:00 AM – 6:00 PM</span>
+      </div>
+      <div class="top-bar-sep"></div>
+      <!-- Language toggle -->
+      <button class="tb-btn" id="tbLangBtn" title="Toggle Language">
+        <i class="fas fa-language"></i>
+        <span id="tbLangLabel">EN</span>
+      </button>
+      <!-- Theme toggle -->
+      <button class="tb-btn" id="tbThemeBtn" title="Toggle Theme">
+        <i class="fas fa-circle-half-stroke" id="tbThemeIcon"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- LOADING SCREEN -->
 <div class="loader" id="loader">
   <div class="loader-inner">
     <div class="loader-logo">
-      <img src="company .jpeg" alt="Starline Builders" onerror="this.style.display='none'"/>
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline Builders" onerror="this.style.display='none'"/>
       <div class="loader-brand">STARLINE BUILDERS LTD.</div>
     </div>
     <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
@@ -29,15 +68,17 @@
 </div>
 
 <!-- ===================== NAVBAR ===================== -->
-
 <nav class="navbar" id="navbar">
   <div class="nav-container">
     <!-- LEFT: Logo -->
     <div class="nav-logo" id="navLogoArea">
-      <img src="company .jpeg" alt="Starline Builders" class="logo-img" id="navLogoImg" onerror="this.style.display='none'"/>
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline Builders" class="logo-img" id="navLogoImg" onerror="this.style.display='none'"/>
       <div class="nav-brand">
-       <span class="brand-name" id="navBrandName">STARLINE BUILDERS LTD.</span>
-       <span>INVEST SMART. LIVE BETTER.</span>
+        <span class="brand-star">★</span>
+        <div>
+          <span class="brand-name" id="navBrandName">STARLINE BUILDERS LTD.</span>
+          <span class="brand-tagline">Invest Smart. Live Better.</span>
+        </div>
       </div>
     </div>
 
@@ -48,7 +89,7 @@
 
       <!-- Property Dropdown -->
       <li class="has-dropdown">
-        <a href="" class="nav-link">Property <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <a href="#properties" class="nav-link">Property <i class="fas fa-chevron-down nav-arrow"></i></a>
         <div class="dropdown-menu">
           <a href="#properties" class="dropdown-item" data-filter="status" data-value="ongoing"><span class="dot ongoing"></span>Ongoing</a>
           <a href="#properties" class="dropdown-item" data-filter="status" data-value="handover"><span class="dot handover"></span>Handover</a>
@@ -60,7 +101,7 @@
 
       <!-- Location Dropdown -->
       <li class="has-dropdown">
-        <a href="" class="nav-link">Location <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <a href="#properties" class="nav-link">Location <i class="fas fa-chevron-down nav-arrow"></i></a>
         <div class="dropdown-menu">
           <a href="#properties" class="dropdown-item" data-filter="location" data-value="Gulshan">Gulshan</a>
           <a href="#properties" class="dropdown-item" data-filter="location" data-value="Banani">Banani</a>
@@ -74,7 +115,7 @@
 
       <!-- Size Dropdown -->
       <li class="has-dropdown">
-        <a href="" class="nav-link">Size <i class="fas fa-chevron-down nav-arrow"></i></a>
+        <a href="#properties" class="nav-link">Size <i class="fas fa-chevron-down nav-arrow"></i></a>
         <div class="dropdown-menu">
           <a href="#properties" class="dropdown-item" data-filter="size" data-value="1200">1200 sqft</a>
           <a href="#properties" class="dropdown-item" data-filter="size" data-value="1500">1500 sqft</a>
@@ -86,6 +127,7 @@
       </li>
 
       <li><a href="#contact" class="nav-link">Contact</a></li>
+      <li><a href="#company-profile" class="nav-link">Company</a></li>
     </ul>
 
     <!-- RIGHT: Login + Hamburger -->
@@ -125,9 +167,9 @@
     <div class="about-grid">
       <div class="about-visual">
         <div class="about-img-wrap">
-          <img src="company .jpeg" alt="About Starline" class="about-img"/>
+          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80" alt="About Starline" class="about-img"/>
           <div class="about-badge">
-            <span class="badge-num">10+</span>
+            <span class="badge-num">25+</span>
             <span class="badge-txt">Years of Excellence</span>
           </div>
         </div>
@@ -155,19 +197,19 @@
         </div>
         <div class="counters">
           <div class="counter-item">
-            <span class="counter-num" data-target="10">0</span><span class="gold">+</span>
+            <span class="counter-num" data-target="250">0</span><span class="gold">+</span>
             <span class="counter-label">Projects Completed</span>
           </div>
           <div class="counter-item">
-            <span class="counter-num" data-target="5">0</span><span class="gold">+</span>
+            <span class="counter-num" data-target="5000">0</span><span class="gold">+</span>
             <span class="counter-label">Happy Families</span>
           </div>
           <div class="counter-item">
-            <span class="counter-num" data-target="10">0</span><span class="gold">+</span>
+            <span class="counter-num" data-target="25">0</span><span class="gold">+</span>
             <span class="counter-label">Years Experience</span>
           </div>
           <div class="counter-item">
-            <span class="counter-num" data-target="8">0</span><span class="gold">+</span>
+            <span class="counter-num" data-target="12">0</span><span class="gold">+</span>
             <span class="counter-label">Prime Locations</span>
           </div>
         </div>
@@ -227,7 +269,7 @@
 <section class="contact" id="contact">
   <div class="container">
     <div class="section-header">
-      
+      <div class="section-tag">Get In Touch</div>
       <h2 class="section-title">Contact <span class="gold">Us</span></h2>
     </div>
     <div class="contact-grid">
@@ -235,7 +277,7 @@
         <div class="contact-detail">
           <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
           <div>
-            <h4>Head-Office</h4>
+            <h4>Our Office</h4>
             <p id="contactAddress">House #12, Road #5, Gulshan-2, Dhaka-1212, Bangladesh</p>
           </div>
         </div>
@@ -261,7 +303,7 @@
           </div>
         </div>
         <div class="map-preview">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d113.9926884639911!2d90.40869!3d23.7723533!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755c72351d44ef5%3A0x415c105a5b490485!2sStarLine%20Builders%20LTD.!5e0!3m2!1sen!2sbd!4v1715678901234!5m2!1sen!2sbd" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.4!2d90.4152!3d23.7925!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDQ3JzMzLjAiTiA5MMKwMjQnNTQuNyJF!5e0!3m2!1sen!2sbd!4v1" allowfullscreen="" loading="lazy" style="border:0"></iframe>
         </div>
       </div>
       <div class="contact-form-wrap">
@@ -304,6 +346,71 @@
   </div>
 </section>
 
+<!-- ===================== COMPANY PROFILE ===================== -->
+<section class="company-profile" id="company-profile">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Our Company</div>
+      <h2 class="section-title">Company <span class="gold">Profile</span></h2>
+      <p class="section-desc" id="cpTagline">Building dreams into reality since 1999.</p>
+    </div>
+
+    <!-- Company Overview -->
+    <div class="cp-overview reveal" id="cpOverview">
+      <div class="cp-overview-text">
+        <h3 class="cp-sub-title">About <span class="gold">Starline Builders Ltd.</span></h3>
+        <p id="cpAboutText">STARLINE BUILDERS LTD. is one of Bangladesh's most trusted and prestigious real estate development companies. Established in 1999, we have been transforming Dhaka's skyline with iconic residential and commercial properties.</p>
+        <div class="cp-stats-row">
+          <div class="cp-stat"><span class="cp-stat-num gold">1999</span><span>Established</span></div>
+          <div class="cp-stat"><span class="cp-stat-num gold" id="cpProjects">250+</span><span>Projects</span></div>
+          <div class="cp-stat"><span class="cp-stat-num gold" id="cpFamilies">5000+</span><span>Families</span></div>
+          <div class="cp-stat"><span class="cp-stat-num gold" id="cpLocations">12+</span><span>Locations</span></div>
+        </div>
+      </div>
+      <div class="cp-overview-img">
+        <img id="cpCompanyImg" src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80" alt="Starline Builders Office"/>
+        <div class="cp-overview-badge"><i class="fas fa-award"></i><span>Award Winning</span></div>
+      </div>
+    </div>
+
+    <!-- Board of Directors — 4 fixed roles -->
+    <div class="cp-section-title reveal">
+      <div class="section-tag">Leadership</div>
+      <h3>Board of <span class="gold">Directors</span></h3>
+    </div>
+    <div class="cp-board-grid" id="cpBoardGrid">
+      <!-- 4 fixed board cards injected by JS -->
+    </div>
+
+    <!-- Employees -->
+    <div class="cp-section-title reveal" style="margin-top:4rem">
+      <div class="section-tag">Our Team</div>
+      <h3>Our <span class="gold">Employees</span></h3>
+    </div>
+    <div class="cp-team-grid" id="cpTeamGrid">
+      <!-- Employee cards injected by JS -->
+    </div>
+
+    <!-- Customer Reviews -->
+    <div class="cp-section-title reveal" style="margin-top:4rem">
+      <div class="section-tag">Testimonials</div>
+      <h3>Customer <span class="gold">Reviews</span></h3>
+    </div>
+    <div class="cp-rating-section" id="cpRatingSection">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- News & Updates -->
+    <div class="cp-section-title reveal" style="margin-top:4rem">
+      <div class="section-tag">Latest</div>
+      <h3>News & <span class="gold">Updates</span></h3>
+    </div>
+    <div class="cp-news-grid" id="cpNewsGrid">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</section>
+
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer" id="footer">
   <div class="footer-top">
@@ -311,16 +418,17 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <div class="footer-logo">
-            <img src="company .jpeg" alt="Starline" class="footer-logo-img" onerror="this.style.display='none'"/>
+            <img src="/mnt/user-data/uploads/company_.jpeg" alt="Starline" class="footer-logo-img" onerror="this.style.display='none'"/>
             <span class="footer-brand-name" id="footerBrandName">STARLINE BUILDERS LTD.</span>
           </div>
           <p class="footer-desc" id="footerDesc">Invest Smart. Live Better. Delivering premium real estate experiences across Bangladesh's most prestigious addresses.</p>
           <div class="social-links" id="socialLinks">
-            <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
-            <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" class="social-link" id="socialFacebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="social-link" id="socialInstagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link" id="socialYoutube"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="social-link" id="socialLinkedin"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-link" id="footerWhatsapp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" class="social-link" id="footerTelegram"><i class="fab fa-telegram-plane"></i></a>
           </div>
         </div>
         <div class="footer-col">
@@ -459,7 +567,7 @@
 <div class="admin-dashboard" id="adminDashboard">
   <div class="admin-sidebar" id="adminSidebar">
     <div class="admin-brand">
-      <img src="company .jpeg" alt="" class="admin-logo-img" onerror="this.style.display='none'"/>
+      <img src="/mnt/user-data/uploads/company_.jpeg" alt="" class="admin-logo-img" onerror="this.style.display='none'"/>
       <span>Admin Panel</span>
     </div>
     <ul class="admin-menu">
@@ -474,6 +582,7 @@
       <li><a href="#" class="admin-nav" data-panel="dashMessages"><i class="fas fa-envelope"></i> Messages</a></li>
       <li><a href="#" class="admin-nav" data-panel="dashTheme"><i class="fas fa-palette"></i> Theme</a></li>
       <li><a href="#" class="admin-nav" data-panel="dashNavbar"><i class="fas fa-bars"></i> Navbar</a></li>
+      <li><a href="#" class="admin-nav" data-panel="dashCompany"><i class="fas fa-building"></i> Company Profile</a></li>
     </ul>
     <button class="admin-logout" id="adminLogout"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div>
@@ -714,8 +823,197 @@
       </div>
     </div>
 
+    <!-- Company Profile Panel -->
+    <div class="admin-panel" id="dashCompany">
+
+      <!-- Overview -->
+      <div class="admin-form-card">
+        <h4><i class="fas fa-building" style="color:var(--gold);margin-right:0.5rem"></i>Company Overview</h4>
+        <div class="admin-form-grid">
+          <div class="form-group full"><label>Tagline</label><input type="text" id="cpAdminTagline" placeholder="Building dreams into reality since 1999."/></div>
+          <div class="form-group full"><label>About Text</label><textarea id="cpAdminAbout" rows="4" placeholder="Company description..."></textarea></div>
+          <div class="form-group"><label>Total Projects</label><input type="text" id="cpAdminProjects" placeholder="250+"/></div>
+          <div class="form-group"><label>Total Families</label><input type="text" id="cpAdminFamilies" placeholder="5000+"/></div>
+          <div class="form-group"><label>Locations</label><input type="text" id="cpAdminLocations" placeholder="12+"/></div>
+          <div class="form-group">
+            <label>Company Image</label>
+            <div style="position:relative;margin-bottom:0.5rem">
+              <input type="file" id="cpImgFile" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%;height:100%"/>
+              <div id="cpImgPickerDisplay" style="
+                display:flex;align-items:center;gap:0.8rem;padding:0.9rem 1rem;
+                background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+                border-radius:10px;cursor:pointer;transition:all 0.3s;
+              ">
+                <div id="cpImgThumb" style="width:50px;height:38px;border-radius:6px;background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <i class="fas fa-image" style="color:var(--gold)"></i>
+                </div>
+                <div>
+                  <div id="cpImgName" style="font-size:0.82rem;color:var(--text)">Click to upload company image</div>
+                  <div style="font-size:0.72rem;color:var(--text-muted)">JPG, PNG — or paste URL below</div>
+                </div>
+                <i class="fas fa-folder-open" style="color:var(--gold);margin-left:auto"></i>
+              </div>
+            </div>
+            <input type="text" id="cpAdminImg" placeholder="or paste image URL here" style="padding:0.7rem 1rem;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:var(--text);font-size:0.82rem;font-family:var(--body-font)"/>
+          </div>
+        </div>
+        <button class="btn-primary" id="saveCpOverviewBtn"><i class="fas fa-save"></i> Save Overview</button>
+      </div>
+
+      <!-- Board of Directors — 4 fixed roles -->
+      <div class="admin-section-title">Board of Directors (4 Fixed Positions)</div>
+      <div class="admin-form-card">
+        <p style="color:var(--text-muted);font-size:0.83rem;margin-bottom:1.5rem">Edit the 4 fixed board member positions. Each has a fixed designation.</p>
+        <div id="boardMembersAdmin">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Employees -->
+      <div class="panel-header" style="margin-top:1.5rem">
+        <h3>Employees</h3>
+        <button class="btn-primary" id="addEmployeeBtn"><i class="fas fa-plus"></i> Add Employee</button>
+      </div>
+      <div class="admin-form-card" id="employeeFormCard" style="display:none">
+        <h4 id="employeeFormTitle">Add Employee</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Full Name</label><input type="text" id="empName" placeholder="Employee name"/></div>
+          <div class="form-group"><label>Designation</label><input type="text" id="empRole" placeholder="e.g. Sales Manager"/></div>
+          <div class="form-group"><label>Department</label>
+            <select id="empDept">
+              <option>Sales</option><option>Engineering</option><option>Architecture</option>
+              <option>Finance</option><option>HR</option><option>Marketing</option><option>Legal</option><option>Operations</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Photo</label>
+            <div style="position:relative">
+              <input type="file" id="empPhotoFile" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2"/>
+              <div style="padding:0.7rem 1rem;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;cursor:pointer;font-size:0.82rem;color:var(--text-muted)">
+                <i class="fas fa-camera" style="color:var(--gold);margin-right:0.5rem"></i>Upload photo
+              </div>
+            </div>
+            <input type="text" id="empPhoto" placeholder="or photo URL" style="margin-top:0.5rem;padding:0.6rem 1rem;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:var(--text);font-size:0.82rem;font-family:var(--body-font)"/>
+          </div>
+          <div class="form-group full"><label>Bio</label><textarea id="empBio" rows="2" placeholder="Brief bio..."></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveEmpBtn">Save Employee</button>
+          <button class="btn-outline" id="cancelEmpBtn">Cancel</button>
+        </div>
+      </div>
+      <div class="admin-table-wrap" style="margin-bottom:2rem">
+        <table class="admin-table">
+          <thead><tr><th>Photo</th><th>Name</th><th>Role</th><th>Dept</th><th>Actions</th></tr></thead>
+          <tbody id="empTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No employees yet</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Customer Reviews -->
+      <div class="admin-section-title">Customer Reviews</div>
+      <div class="panel-header">
+        <h3>Reviews</h3>
+        <button class="btn-primary" id="addReviewBtn"><i class="fas fa-plus"></i> Add Review</button>
+      </div>
+      <div class="admin-form-card" id="reviewFormCard" style="display:none">
+        <h4 id="reviewFormTitle">Add Customer Review</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Customer Name</label><input type="text" id="reviewName" placeholder="e.g. Mr. Rahim Ahmed"/></div>
+          <div class="form-group"><label>Rating (1-5)</label>
+            <select id="reviewRating">
+              <option value="5">⭐⭐⭐⭐⭐ — 5 Stars</option>
+              <option value="4">⭐⭐⭐⭐ — 4 Stars</option>
+              <option value="3">⭐⭐⭐ — 3 Stars</option>
+              <option value="2">⭐⭐ — 2 Stars</option>
+              <option value="1">⭐ — 1 Star</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Property / Project</label><input type="text" id="reviewProperty" placeholder="e.g. Starline Meridian"/></div>
+          <div class="form-group"><label>Date</label><input type="date" id="reviewDate"/></div>
+          <div class="form-group"><label>Customer Photo</label>
+            <div style="position:relative">
+              <input type="file" id="reviewPhotoFile" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2"/>
+              <div style="padding:0.7rem 1rem;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;cursor:pointer;font-size:0.82rem;color:var(--text-muted)">
+                <i class="fas fa-camera" style="color:var(--gold);margin-right:0.5rem"></i>Upload photo
+              </div>
+            </div>
+            <input type="text" id="reviewPhoto" placeholder="or paste photo URL" style="margin-top:0.5rem;padding:0.6rem 1rem;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:var(--text);font-size:0.82rem;font-family:var(--body-font)"/>
+          </div>
+          <div class="form-group"><label>Location / City</label><input type="text" id="reviewLocation" placeholder="e.g. Gulshan, Dhaka"/></div>
+          <div class="form-group full"><label>Review Text</label><textarea id="reviewText" rows="3" placeholder="Customer's review message..."></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveReviewBtn">Save Review</button>
+          <button class="btn-outline" id="cancelReviewBtn">Cancel</button>
+        </div>
+      </div>
+      <div class="admin-table-wrap" style="margin-bottom:2rem">
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>Photo</th><th>Name</th><th>Rating</th><th>Property</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="reviewTableBody"><tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No reviews yet</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- News -->
+      <div class="panel-header" style="margin-top:1rem">
+        <h3>News & Updates</h3>
+        <button class="btn-primary" id="addNewsBtn"><i class="fas fa-plus"></i> Add News</button>
+      </div>
+      <div class="admin-form-card" id="newsFormCard" style="display:none">
+        <h4 id="newsFormTitle">Add News</h4>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Title</label><input type="text" id="newsTitle" placeholder="News headline..."/></div>
+          <div class="form-group"><label>Category</label>
+            <select id="newsCategory">
+              <option value="news">News</option><option value="project">Project Update</option>
+              <option value="award">Award</option><option value="event">Event</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Date</label><input type="date" id="newsDate"/></div>
+          <div class="form-group"><label>Image URL</label><input type="text" id="newsImage" placeholder="https://..."/></div>
+          <div class="form-group"><label>Video URL (YouTube embed or direct)</label><input type="text" id="newsVideo" placeholder="https://youtube.com/embed/..."/></div>
+          <div class="form-group full"><label>Content</label><textarea id="newsContent" rows="3" placeholder="News details..."></textarea></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveNewsBtn">Save News</button>
+          <button class="btn-outline" id="cancelNewsBtn">Cancel</button>
+        </div>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="newsTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No news yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div><!-- end admin-content -->
 </div><!-- end admin-dashboard -->
+
+<!-- FLOATING SOCIAL BUTTONS -->
+<div class="floating-social" id="floatingSocial">
+  <a href="#" class="float-btn float-wa" id="floatWa" title="WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  <a href="#" class="float-btn float-tg" id="floatTg" title="Telegram">
+    <i class="fab fa-telegram-plane"></i>
+  </a>
+</div>
+
+<!-- NEWS DETAIL PAGE (Full overlay) -->
+<div class="news-detail-overlay" id="newsDetailOverlay">
+  <div class="news-detail-page" id="newsDetailPage">
+    <div class="news-detail-topbar">
+      <button class="news-detail-back" id="newsDetailBack">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <span class="news-detail-logo">STARLINE BUILDERS LTD.</span>
+      <div></div>
+    </div>
+    <div class="news-detail-content" id="newsDetailContent">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
 
 <!-- SUCCESS TOAST -->
 <div class="toast" id="toast"></div>
@@ -724,7 +1022,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<!-- Firebase Config (তোমার API keys — .gitignore এ রাখো) -->
 <script src="firebase-config.js"></script>
+
 <script src="script.js"></script>
 </body>
 </html>

@@ -156,6 +156,7 @@ const DEFAULT_SETTINGS = {
     youtube:   '',
     linkedin:  '',
     whatsapp:  '',
+    telegram:  '',
   }
 };
 
@@ -202,7 +203,7 @@ function saveCustomOptions() { localStorage.setItem('sl_custom_options', JSON.st
 // =============================================
 
 async function loadData() {
-  // Always load from localStorage first (instant, for display)
+  // Step 1: Load from localStorage first (instant display)
   properties  = JSON.parse(localStorage.getItem('sl_properties') || 'null') || DEFAULT_PROPERTIES;
   heroSlides  = JSON.parse(localStorage.getItem('sl_slides')     || 'null') || DEFAULT_HERO_SLIDES;
   whyCards    = JSON.parse(localStorage.getItem('sl_why')        || 'null') || DEFAULT_WHY_CARDS;
@@ -211,7 +212,7 @@ async function loadData() {
   messages    = JSON.parse(localStorage.getItem('sl_messages')   || '[]');
   loadCustomOptions();
 
-  // Then try Firebase (overrides localStorage with latest cloud data)
+  // Step 2: If no localStorage data, save defaults to Firebase
   if (firebaseReady) {
     try {
       const [fbProps, fbUsers, fbMsgs, fbSettings, fbSlides, fbWhy, fbOpts] = await Promise.all([
@@ -224,17 +225,59 @@ async function loadData() {
         dbGetSingle('customoptions'),
       ]);
 
-      if (fbProps  && fbProps.length)  { properties = fbProps.sort((a,b) => (a.id||0)-(b.id||0)); localStorage.setItem('sl_properties', JSON.stringify(properties)); }
-      if (fbUsers  && fbUsers.length)  { users      = fbUsers.sort((a,b) => (a.id||0)-(b.id||0)); localStorage.setItem('sl_users',      JSON.stringify(users)); }
-      if (fbMsgs   && fbMsgs.length)   { messages   = fbMsgs.sort((a,b)  => (a.id||0)-(b.id||0)); localStorage.setItem('sl_messages',   JSON.stringify(messages)); }
-      if (fbSettings)                  { settings   = fbSettings;  localStorage.setItem('sl_settings', JSON.stringify(settings)); }
-      if (fbSlides  && fbSlides.urls)  { heroSlides = fbSlides.urls; localStorage.setItem('sl_slides',   JSON.stringify(heroSlides)); }
-      if (fbWhy     && fbWhy.cards)    { whyCards   = fbWhy.cards;  localStorage.setItem('sl_why',       JSON.stringify(whyCards)); }
-      if (fbOpts)                      { customOptions = { locations: fbOpts.locations || customOptions.locations, statuses: fbOpts.statuses || customOptions.statuses, sizes: fbOpts.sizes || customOptions.sizes }; localStorage.setItem('sl_custom_options', JSON.stringify(customOptions)); }
+      // Properties — clean _docId field, fallback to defaults if empty
+      if (fbProps && fbProps.length) {
+        const clean = fbProps.map(p => { const {_docId, ...rest} = p; return rest; }).filter(p => p.id && p.name);
+        if (clean.length) {
+          properties = clean.sort((a,b) => (a.id||0)-(b.id||0));
+          localStorage.setItem('sl_properties', JSON.stringify(properties));
+        }
+      } else if (!localStorage.getItem('sl_properties')) {
+        // First time — push defaults to Firebase
+        for (const p of DEFAULT_PROPERTIES) await dbSet('properties', p.id, p);
+      }
 
-      console.log('✓ Data loaded from Firebase.');
+      // Users & Messages
+      if (fbUsers && fbUsers.length) {
+        users = fbUsers.map(u => { const {_docId,...r}=u; return r; }).sort((a,b)=>(a.id||0)-(b.id||0));
+        localStorage.setItem('sl_users', JSON.stringify(users));
+      }
+      if (fbMsgs && fbMsgs.length) {
+        messages = fbMsgs.map(m => { const {_docId,...r}=m; return r; }).sort((a,b)=>(a.id||0)-(b.id||0));
+        localStorage.setItem('sl_messages', JSON.stringify(messages));
+      }
+
+      // Settings
+      if (fbSettings && Object.keys(fbSettings).length) {
+        settings = fbSettings;
+        localStorage.setItem('sl_settings', JSON.stringify(settings));
+      }
+
+      // Slides
+      if (fbSlides && fbSlides.urls && fbSlides.urls.length) {
+        heroSlides = fbSlides.urls;
+        localStorage.setItem('sl_slides', JSON.stringify(heroSlides));
+      }
+
+      // Why cards
+      if (fbWhy && fbWhy.cards && fbWhy.cards.length) {
+        whyCards = fbWhy.cards;
+        localStorage.setItem('sl_why', JSON.stringify(whyCards));
+      }
+
+      // Custom options
+      if (fbOpts && (fbOpts.locations || fbOpts.statuses || fbOpts.sizes)) {
+        customOptions = {
+          locations: fbOpts.locations || customOptions.locations,
+          statuses:  fbOpts.statuses  || customOptions.statuses,
+          sizes:     fbOpts.sizes     || customOptions.sizes,
+        };
+        localStorage.setItem('sl_custom_options', JSON.stringify(customOptions));
+      }
+
+      console.log('✓ Firebase data loaded. Properties:', properties.length);
     } catch(e) {
-      console.warn('Firebase data load failed, using localStorage:', e);
+      console.warn('Firebase load failed, using localStorage/defaults:', e);
     }
   }
 }
@@ -328,6 +371,227 @@ function startRealtimeListeners() {
     renderProperties();
     if (adminLoggedIn) { renderAdminProperties(); refreshAdminData(); }
   });
+}
+
+// =============================================
+// TOP BAR — Clock, Office Status, Lang, Theme
+// =============================================
+function initTopBar() {
+  // ── Clock ────────────────────────────────
+  function updateTopBarClock() {
+    const now   = new Date();
+    const days  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const timeStr = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
+    const dateEl = document.getElementById('tbDate');
+    const timeEl = document.getElementById('tbTime');
+    if (dateEl) dateEl.textContent = dateStr;
+    if (timeEl) timeEl.textContent = timeStr;
+
+    // Office open/closed (Sat–Thu 10AM–6PM)
+    const dot  = document.getElementById('tbDot');
+    const txt  = document.getElementById('tbOfficeText');
+    const day  = now.getDay(); // 0=Sun,6=Sat,5=Fri
+    const hour = now.getHours() + now.getMinutes() / 60;
+    const isWorkDay = day !== 5; // Friday closed
+    const isWorkHour = hour >= 10 && hour < 18;
+    const isOpen = isWorkDay && isWorkHour;
+    if (dot) { dot.className = 'tb-dot ' + (isOpen ? 'open' : 'closed'); }
+    if (txt) txt.textContent = isOpen
+      ? 'Office Open · 10:00 AM – 6:00 PM'
+      : (day === 5 ? 'Closed Today (Friday)' : 'Office Closed · Opens 10:00 AM');
+  }
+  updateTopBarClock();
+  setInterval(updateTopBarClock, 1000);
+
+  // ── Language Toggle — Full Page Translation ──
+  const TRANSLATIONS = {
+    // Navbar
+    'Home':    { bn: 'হোম' },
+    'About':   { bn: 'আমাদের সম্পর্কে' },
+    'Contact': { bn: 'যোগাযোগ' },
+    'Company': { bn: 'কোম্পানি' },
+    // Dropdowns
+    'Ongoing':    { bn: 'চলমান' },
+    'Handover':   { bn: 'হ্যান্ডওভার' },
+    'Processing': { bn: 'প্রক্রিয়াধীন' },
+    'Upcoming':   { bn: 'আসন্ন' },
+    'Featured':   { bn: 'বিশেষ' },
+    // Hero
+    'Building Future': { bn: 'ভবিষ্যৎ গড়ছি' },
+    'Premium Real Estate': { bn: 'প্রিমিয়াম রিয়েল এস্টেট' },
+    'Explore Properties':  { bn: 'প্রপার্টি দেখুন' },
+    'Book Consultation':   { bn: 'পরামর্শ নিন' },
+    'Experience unmatched living with Starline Builders Ltd. — where architecture meets aspiration.':
+      { bn: 'স্টারলাইন বিল্ডার্স লিমিটেডের সাথে অতুলনীয় জীবনযাপন অনুভব করুন — যেখানে স্থাপত্য মিলিত হয় আকাঙ্ক্ষার সাথে।' },
+    // Section tags & titles
+    'Who We Are':   { bn: 'আমরা কারা' },
+    'Our Portfolio':{ bn: 'আমাদের প্রকল্প' },
+    'Why Us':       { bn: 'কেন আমরা' },
+    'Get In Touch': { bn: 'যোগাযোগ করুন' },
+    'Our Company':  { bn: 'আমাদের কোম্পানি' },
+    'Leadership':   { bn: 'নেতৃত্ব' },
+    'Our Team':     { bn: 'আমাদের দল' },
+    'Testimonials': { bn: 'গ্রাহক মতামত' },
+    'Latest':       { bn: 'সর্বশেষ' },
+    'Reputation':   { bn: 'সুনাম' },
+    // About section
+    'Crafting Iconic Spaces Since 1999': { bn: '১৯৯৯ সাল থেকে আইকনিক স্থান নির্মাণ' },
+    'Years of Excellence': { bn: 'বছরের উৎকর্ষতা' },
+    'Our Mission': { bn: 'আমাদের লক্ষ্য' },
+    'Our Vision':  { bn: 'আমাদের দৃষ্টিভঙ্গি' },
+    'Projects Completed': { bn: 'প্রকল্প সম্পন্ন' },
+    'Happy Families':     { bn: 'সুখী পরিবার' },
+    'Years Experience':   { bn: 'বছরের অভিজ্ঞতা' },
+    'Prime Locations':    { bn: 'প্রধান অবস্থান' },
+    // Property section
+    'All Properties':  { bn: 'সব প্রপার্টি' },
+    'Show All':        { bn: 'সব দেখুন' },
+    'View Details':    { bn: 'বিস্তারিত দেখুন' },
+    'Book Now':        { bn: 'এখনই বুক করুন' },
+    'Contact Us':      { bn: 'আমাদের সাথে যোগাযোগ করুন' },
+    // Why section
+    'Trusted Company':      { bn: 'বিশ্বস্ত কোম্পানি' },
+    'Premium Design':       { bn: 'প্রিমিয়াম ডিজাইন' },
+    'Modern Architecture':  { bn: 'আধুনিক স্থাপত্য' },
+    'Transparent Process':  { bn: 'স্বচ্ছ প্রক্রিয়া' },
+    'On-Time Delivery':     { bn: 'সময়মতো বিতরণ' },
+    'Smart Investment':     { bn: 'স্মার্ট বিনিয়োগ' },
+    'Award Winning':        { bn: 'পুরস্কার বিজয়ী' },
+    // Contact
+    'Our Office':    { bn: 'আমাদের অফিস' },
+    'Phone':         { bn: 'ফোন' },
+    'Email':         { bn: 'ইমেইল' },
+    'Office Hours':  { bn: 'অফিস সময়' },
+    'Send an':       { bn: 'একটি' },
+    'Enquiry':       { bn: 'অনুসন্ধান পাঠান' },
+    'Your Full Name':    { bn: 'আপনার পূর্ণ নাম' },
+    'Phone Number':      { bn: 'ফোন নম্বর' },
+    'Email Address':     { bn: 'ইমেইল ঠিকানা' },
+    'Your Message...':   { bn: 'আপনার বার্তা...' },
+    'Send Message':      { bn: 'বার্তা পাঠান' },
+    // Footer
+    'Properties':        { bn: 'প্রপার্টি' },
+    'Ongoing Projects':  { bn: 'চলমান প্রকল্প' },
+    'Handover Projects': { bn: 'হ্যান্ডওভার প্রকল্প' },
+    'Upcoming Projects': { bn: 'আসন্ন প্রকল্প' },
+    'Featured Properties':{ bn: 'বিশেষ প্রপার্টি' },
+    'Commercial Spaces': { bn: 'বাণিজ্যিক স্থান' },
+    'About Us':          { bn: 'আমাদের সম্পর্কে' },
+    'Why Choose Us':     { bn: 'কেন আমাদের বেছে নেবেন' },
+    'Privacy Policy':    { bn: 'গোপনীয়তা নীতি' },
+    'Terms & Conditions':{ bn: 'শর্তাবলী' },
+    'Contact Info':      { bn: 'যোগাযোগ তথ্য' },
+    // Company profile
+    'Board of Directors': { bn: 'পরিচালনা পর্ষদ' },
+    'Chairman':           { bn: 'চেয়ারম্যান' },
+    'Managing Director':  { bn: 'ব্যবস্থাপনা পরিচালক' },
+    'Director of Sales':  { bn: 'বিক্রয় পরিচালক' },
+    'Director':           { bn: 'পরিচালক' },
+    'Our Employees':      { bn: 'আমাদের কর্মীরা' },
+    'Customer Reviews':   { bn: 'গ্রাহক পর্যালোচনা' },
+    'News & Updates':     { bn: 'সংবাদ ও আপডেট' },
+    // Login modal
+    'Customer':   { bn: 'গ্রাহক' },
+    'Admin':      { bn: 'অ্যাডমিন' },
+    'Register':   { bn: 'নিবন্ধন' },
+    'Customer Login':    { bn: 'গ্রাহক লগইন' },
+    'Super Admin Login': { bn: 'সুপার অ্যাডমিন লগইন' },
+    'Create Account':    { bn: 'অ্যাকাউন্ট তৈরি করুন' },
+    'Login':      { bn: 'লগইন' },
+  };
+
+  let currentLang = localStorage.getItem('sl_lang') || 'en';
+  if (currentLang === 'bn') applyLangBn();
+
+  document.getElementById('tbLangBtn')?.addEventListener('click', () => {
+    currentLang = currentLang === 'en' ? 'bn' : 'en';
+    localStorage.setItem('sl_lang', currentLang);
+    const label = document.getElementById('tbLangLabel');
+    if (label) label.textContent = currentLang === 'bn' ? 'বাং' : 'EN';
+    currentLang === 'bn' ? applyLangBn() : applyLangEn();
+  });
+
+  // Update label on load
+  const initLangLabel = document.getElementById('tbLangLabel');
+  if (initLangLabel) initLangLabel.textContent = currentLang === 'bn' ? 'বাং' : 'EN';
+
+  function translateNode(el) {
+    // Only translate text nodes, not scripts/styles
+    if (!el || el.nodeType !== 1) return;
+    const tag = el.tagName;
+    if (['SCRIPT','STYLE','NOSCRIPT','IFRAME'].includes(tag)) return;
+
+    // Translate placeholder
+    if (el.placeholder && TRANSLATIONS[el.placeholder]?.bn) {
+      if (!el.dataset.enPlaceholder) el.dataset.enPlaceholder = el.placeholder;
+      el.placeholder = currentLang === 'bn' ? TRANSLATIONS[el.placeholder]?.bn : el.dataset.enPlaceholder;
+    }
+
+    // Translate direct text content (leaf nodes without children elements)
+    if (el.children.length === 0 && el.textContent.trim()) {
+      const txt = el.textContent.trim();
+      if (currentLang === 'bn') {
+        if (TRANSLATIONS[txt]?.bn) {
+          if (!el.dataset.en) el.dataset.en = txt;
+          el.textContent = TRANSLATIONS[txt].bn;
+        }
+      } else {
+        if (el.dataset.en) el.textContent = el.dataset.en;
+      }
+    }
+
+    // Recurse children
+    Array.from(el.children).forEach(translateNode);
+  }
+
+  function applyLangBn() {
+    document.body.classList.add('lang-bn');
+    // Load Bengali font
+    if (!document.getElementById('bnFont')) {
+      const link = document.createElement('link');
+      link.id = 'bnFont'; link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap';
+      document.head.appendChild(link);
+    }
+    // Translate key areas
+    ['#navbar', '#home .hero-content', '#about', '#properties', '#why', '#contact', 'footer', '#company-profile', '#loginModal'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) translateNode(el);
+    });
+  }
+
+  function applyLangEn() {
+    document.body.classList.remove('lang-bn');
+    ['#navbar', '#home .hero-content', '#about', '#properties', '#why', '#contact', 'footer', '#company-profile', '#loginModal'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) translateNode(el);
+    });
+  }
+
+  // ── Theme Toggle ──────────────────────────
+  let isLight = localStorage.getItem('sl_theme') === 'light';
+  if (isLight) applyLightTheme(true);
+
+  document.getElementById('tbThemeBtn')?.addEventListener('click', () => {
+    isLight = !isLight;
+    applyLightTheme(isLight);
+    localStorage.setItem('sl_theme', isLight ? 'light' : 'dark');
+  });
+
+  function applyLightTheme(on) {
+    document.body.classList.toggle('light-theme', on);
+    const icon = document.getElementById('tbThemeIcon');
+    if (icon) {
+      icon.className = on ? 'fas fa-moon' : 'fas fa-circle-half-stroke';
+    }
+    const btn = document.getElementById('tbThemeBtn');
+    if (btn) btn.title = on ? 'Switch to Dark' : 'Switch to Light';
+  }
 }
 
 // =============================================
@@ -720,29 +984,86 @@ function applyFooterSettings() {
   const desc  = document.getElementById('footerDesc');
   const brand = document.getElementById('footerBrandName');
   const copy  = document.getElementById('footerCopyright');
-  if (desc)  desc.textContent  = settings.footerDesc      || DEFAULT_SETTINGS.footerDesc;
-  if (brand) brand.textContent = settings.brandName        || DEFAULT_SETTINGS.brandName;
-  if (copy)  copy.innerHTML    = settings.footerCopyright  || DEFAULT_SETTINGS.footerCopyright;
+  if (desc)  desc.textContent  = settings.footerDesc     || DEFAULT_SETTINGS.footerDesc;
+  if (brand) brand.textContent = settings.brandName       || DEFAULT_SETTINGS.brandName;
+  if (copy)  copy.innerHTML    = settings.footerCopyright || DEFAULT_SETTINGS.footerCopyright;
 
-  // Apply social links
-  const sl = settings.socialLinks || DEFAULT_SETTINGS.socialLinks;
-  const socialMap = {
-    facebook:  { icon: 'fab fa-facebook-f',  sel: '#socialLinks .social-link:nth-child(1)' },
-    instagram: { icon: 'fab fa-instagram',    sel: '#socialLinks .social-link:nth-child(2)' },
-    youtube:   { icon: 'fab fa-youtube',      sel: '#socialLinks .social-link:nth-child(3)' },
-    linkedin:  { icon: 'fab fa-linkedin-in',  sel: '#socialLinks .social-link:nth-child(4)' },
-    whatsapp:  { icon: 'fab fa-whatsapp',     sel: '#socialLinks .social-link:nth-child(5)' },
-  };
-  Object.entries(socialMap).forEach(([key, cfg]) => {
-    const el = document.querySelector(cfg.sel);
+  const sl = settings.socialLinks || {};
+
+  // ── URL builder helpers ───────────────────
+  function buildWaUrl(raw) {
+    if (!raw || !raw.trim()) return '';
+    raw = raw.trim();
+    if (raw.startsWith('http')) return raw;
+    return 'https://wa.me/' + raw.replace(/\D/g, '');
+  }
+  function buildTgUrl(raw) {
+    if (!raw || !raw.trim()) return '';
+    raw = raw.trim();
+    if (raw.startsWith('http')) return raw;
+    if (raw.startsWith('t.me')) return 'https://' + raw;
+    if (raw.startsWith('@')) return 'https://t.me/' + raw.slice(1);
+    return 'https://t.me/' + raw;
+  }
+  function setLink(el, url) {
     if (!el) return;
-    const url = sl[key] || '#';
-    el.href = url;
-    el.target = url !== '#' ? '_blank' : '';
-    el.rel = url !== '#' ? 'noopener noreferrer' : '';
-    // Visual indicator if link is set
-    el.style.borderColor = url !== '#' ? 'rgba(201,168,76,0.5)' : '';
+    if (url) {
+      el.href   = url;
+      el.target = '_blank';
+      el.rel    = 'noopener noreferrer';
+      el.style.borderColor = 'rgba(201,168,76,0.6)';
+      el.style.color = '';
+    } else {
+      el.href   = '#';
+      el.target = '';
+      el.rel    = '';
+      el.style.borderColor = '';
+    }
+  }
+
+  // ── Footer icons by explicit ID ────────────
+  const footerIconMap = {
+    facebook:  'socialFacebook',
+    instagram: 'socialInstagram',
+    youtube:   'socialYoutube',
+    linkedin:  'socialLinkedin',
+    whatsapp:  'footerWhatsapp',
+    telegram:  'footerTelegram',
+  };
+  Object.entries(footerIconMap).forEach(([key, id]) => {
+    const el  = document.getElementById(id);
+    let   url = sl[key] || '';
+    if (key === 'whatsapp') url = buildWaUrl(url);
+    if (key === 'telegram') url = buildTgUrl(url);
+    setLink(el, url);
   });
+
+  // ── Floating buttons ──────────────────────
+  const floatWa = document.getElementById('floatWa');
+  const floatTg = document.getElementById('floatTg');
+  const waUrl   = buildWaUrl(sl.whatsapp);
+  const tgUrl   = buildTgUrl(sl.telegram);
+
+  if (floatWa) {
+    if (waUrl) {
+      floatWa.href   = waUrl;
+      floatWa.target = '_blank';
+      floatWa.rel    = 'noopener noreferrer';
+      floatWa.style.display = 'flex';
+    } else {
+      floatWa.style.display = 'none';
+    }
+  }
+  if (floatTg) {
+    if (tgUrl) {
+      floatTg.href   = tgUrl;
+      floatTg.target = '_blank';
+      floatTg.rel    = 'noopener noreferrer';
+      floatTg.style.display = 'flex';
+    } else {
+      floatTg.style.display = 'none';
+    }
+  }
 }
 
 // =============================================
@@ -894,10 +1215,16 @@ function openAdminDashboard() {
   renderAdminSlides();
   renderCustomOptionsUI();
   renderCredentialsUI();
-  renderSocialLinksUI();     // ← social media links manager
+  renderSocialLinksUI();
   fixMessageTableHeaders();
   buildAdminTopbar();
   syncNavbarDropdowns();
+  // Company profile admin
+  renderBoardAdmin();
+  renderAdminEmployees();
+  renderAdminReviews();
+  renderAdminNews();
+  populateCpAdminForm();
 }
 
 document.getElementById('adminLogout').addEventListener('click', () => {
@@ -1127,35 +1454,40 @@ document.getElementById('cancelPropertyBtn').addEventListener('click', () => {
   editingPropertyId = null;
 });
 
-document.getElementById('savePropertyBtn').addEventListener('click', () => {
+document.getElementById('savePropertyBtn').addEventListener('click', async () => {
   const name = document.getElementById('propName').value.trim();
   if (!name) { showToast('✗ Property name is required.'); return; }
   const prop = {
     id: editingPropertyId || Date.now(),
     name,
-    location: document.getElementById('propLocation').value,
-    status: document.getElementById('propStatus').value,
-    size: document.getElementById('propSize').value,
-    price: document.getElementById('propPrice').value || 'Price on request',
-    image: document.getElementById('propImage').value || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
+    location:    document.getElementById('propLocation').value,
+    status:      document.getElementById('propStatus').value,
+    size:        document.getElementById('propSize').value,
+    price:       document.getElementById('propPrice').value || 'Price on request',
+    image:       document.getElementById('propImage').value || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80',
     description: document.getElementById('propDesc').value,
-    amenities: document.getElementById('propAmenities').value,
+    amenities:   document.getElementById('propAmenities').value,
   };
   if (editingPropertyId) {
     const idx = properties.findIndex(p => p.id === editingPropertyId);
     if (idx !== -1) properties[idx] = prop;
-    showToast('✓ Property updated successfully!');
   } else {
     properties.push(prop);
-    showToast('✓ Property added successfully!');
   }
-  saveProperties();
-  renderAdminProperties();
+  // ① Save to localStorage immediately (instant)
+  localStorage.setItem('sl_properties', JSON.stringify(properties));
+  // ② Render website immediately from updated array
   renderProperties();
+  renderAdminProperties();
   refreshAdminData();
   renderCharts();
   document.getElementById('propertyFormCard').style.display = 'none';
   editingPropertyId = null;
+  showToast('✓ Property saved!');
+  // ③ Save to Firebase in background (non-blocking)
+  if (firebaseReady) {
+    try { await dbSet('properties', prop.id, prop); } catch(e) { console.warn('Firebase save:', e); }
+  }
 });
 
 window.editProperty = function(id) {
@@ -1188,13 +1520,15 @@ window.editProperty = function(id) {
 window.deleteProperty = function(id) {
   if (!confirm('Delete this property? This cannot be undone.')) return;
   properties = properties.filter(p => p.id !== id);
-  saveProperties();
-  if (firebaseReady) dbDelete('properties', id);
+  // ① Instant
+  localStorage.setItem('sl_properties', JSON.stringify(properties));
   renderAdminProperties();
   renderProperties();
   refreshAdminData();
   renderCharts();
   showToast('✓ Property deleted.');
+  // ② Firebase background
+  if (firebaseReady) dbDelete('properties', id);
 };
 
 // =============================================
@@ -1220,28 +1554,35 @@ function populateAdminForms() {
   document.getElementById('themeText').value = settings.themeText || '#e8e8e8';
 }
 
-document.getElementById('saveHeroBtn').addEventListener('click', () => {
+document.getElementById('saveHeroBtn').addEventListener('click', async () => {
   const raw = document.getElementById('editHeroTitle').value;
-  settings.heroTitle = raw.includes('Luxury') || raw.includes('Premium') || raw.includes('Modern')
-    ? raw.replace(/(Luxury|Premium|Modern|Future|Excellence)/, '<span class="gold">$1</span>')
-    : raw;
+  settings.heroTitle = raw.replace(/(Luxury|Premium|Modern|Future|Excellence|ভবিষ্যৎ|প্রিমিয়াম)/,
+    '<span class="gold">$1</span>');
   settings.heroSubtitle = document.getElementById('editHeroSubtitle').value;
   settings.heroCta1 = document.getElementById('editCta1').value;
   settings.heroCta2 = document.getElementById('editCta2').value;
-  saveSettings();
+  // ① Instant
+  localStorage.setItem('sl_settings', JSON.stringify(settings));
   applyHeroSettings();
   showToast('✓ Hero settings saved!');
+  // ② Firebase background
+  if (firebaseReady) { try { await dbSetSingle('settings', settings); } catch(e) {} }
 });
 
-document.getElementById('addSlideBtn').addEventListener('click', () => {
+document.getElementById('addSlideBtn').addEventListener('click', async () => {
   const url = document.getElementById('newSlideUrl').value.trim();
   if (!url) return;
   heroSlides.push({ url });
-  saveSlides();
+  // ① Instant localStorage + UI update
+  localStorage.setItem('sl_slides', JSON.stringify(heroSlides));
   initHeroSlider();
   renderAdminSlides();
   document.getElementById('newSlideUrl').value = '';
   showToast('✓ Slide added!');
+  // ② Firebase in background
+  if (firebaseReady) {
+    try { await dbSetSingle('slides', { urls: heroSlides }); } catch(e) {}
+  }
 });
 
 function renderAdminSlides() {
@@ -1383,11 +1724,12 @@ function renderSocialLinksUI() {
   const sl = settings.socialLinks || DEFAULT_SETTINGS.socialLinks;
 
   const platforms = [
-    { key: 'facebook',  label: 'Facebook',  icon: 'fab fa-facebook-f',  color: '#1877f2', placeholder: 'https://facebook.com/yourpage' },
-    { key: 'instagram', label: 'Instagram', icon: 'fab fa-instagram',    color: '#e1306c', placeholder: 'https://instagram.com/yourprofile' },
-    { key: 'youtube',   label: 'YouTube',   icon: 'fab fa-youtube',      color: '#ff0000', placeholder: 'https://youtube.com/yourchannel' },
-    { key: 'linkedin',  label: 'LinkedIn',  icon: 'fab fa-linkedin-in',  color: '#0a66c2', placeholder: 'https://linkedin.com/company/yourpage' },
-    { key: 'whatsapp',  label: 'WhatsApp',  icon: 'fab fa-whatsapp',     color: '#25d366', placeholder: 'https://wa.me/8801700000000' },
+    { key: 'facebook',  label: 'Facebook',  icon: 'fab fa-facebook-f',       color: '#1877f2', placeholder: 'https://facebook.com/yourpage' },
+    { key: 'instagram', label: 'Instagram', icon: 'fab fa-instagram',          color: '#e1306c', placeholder: 'https://instagram.com/yourprofile' },
+    { key: 'youtube',   label: 'YouTube',   icon: 'fab fa-youtube',            color: '#ff0000', placeholder: 'https://youtube.com/yourchannel' },
+    { key: 'linkedin',  label: 'LinkedIn',  icon: 'fab fa-linkedin-in',        color: '#0a66c2', placeholder: 'https://linkedin.com/company/yourpage' },
+    { key: 'whatsapp',  label: 'WhatsApp',  icon: 'fab fa-whatsapp',           color: '#25d366', placeholder: 'https://wa.me/8801700000000 or +8801700000000' },
+    { key: 'telegram',  label: 'Telegram',  icon: 'fab fa-telegram-plane',     color: '#229ed9', placeholder: 'https://t.me/yourchannel' },
   ];
 
   card.innerHTML = `
@@ -1433,17 +1775,19 @@ function renderSocialLinksUI() {
 
 window.saveSocialLinks = function() {
   if (!settings.socialLinks) settings.socialLinks = {};
-  ['facebook','instagram','youtube','linkedin','whatsapp'].forEach(key => {
-    const val = document.getElementById(`social_${key}`)?.value.trim() || '';
-    settings.socialLinks[key] = val;
+  ['facebook','instagram','youtube','linkedin','whatsapp','telegram'].forEach(key => {
+    const el = document.getElementById(`social_${key}`);
+    settings.socialLinks[key] = el ? el.value.trim() : '';
   });
-  saveSettings();
+  // Save to localStorage immediately
+  localStorage.setItem('sl_settings', JSON.stringify(settings));
+  // Apply to website immediately
   applyFooterSettings();
-
-  // Show status summary
-  const set = Object.entries(settings.socialLinks).filter(([,v]) => v).length;
-  document.getElementById('socialLinksStatus').innerHTML =
-    `<i class="fas fa-check-circle" style="color:var(--gold)"></i> ${set} of 5 social links saved successfully.`;
+  // Firebase background save
+  if (firebaseReady) { try { dbSetSingle('settings', settings); } catch(e) {} }
+  const set = Object.values(settings.socialLinks).filter(v => v).length;
+  const statusEl = document.getElementById('socialLinksStatus');
+  if (statusEl) statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:var(--gold)"></i> ${set} of 6 links saved & applied!`;
   showToast('✓ Social media links saved!');
 };
 
@@ -2308,8 +2652,676 @@ window.atbLogout = function() {
 };
 
 // =============================================
-// FIX TABLE HEADERS — Add Serial # column
+// COMPANY PROFILE — Data & Functions
 // =============================================
+
+// 4 fixed board positions
+const BOARD_ROLES = [
+  { key: 'chairman',        label: 'Chairman',            icon: 'fas fa-crown' },
+  { key: 'managing_dir',    label: 'Managing Director',   icon: 'fas fa-briefcase' },
+  { key: 'dir_sales',       label: 'Director of Sales',   icon: 'fas fa-chart-line' },
+  { key: 'director',        label: 'Director',            icon: 'fas fa-user-tie' },
+];
+
+const DEFAULT_BOARD = {
+  chairman:     { name: 'Mr. Abdullah Al Mamun', photo: '', bio: 'Visionary leader with 30+ years in real estate.' },
+  managing_dir: { name: 'Eng. Rafiqul Islam',    photo: '', bio: 'Overseeing all projects with focus on quality.' },
+  dir_sales:    { name: 'Mr. Karim Hossain',     photo: '', bio: 'Leading sales strategy and client relations.' },
+  director:     { name: 'Ar. Nasrin Sultana',    photo: '', bio: 'Award-winning architect and design lead.' },
+};
+
+const DEFAULT_EMPLOYEES = [];
+
+const DEFAULT_RATING = { overall: 4.8, total: 0 };
+
+const DEFAULT_REVIEWS = [
+  { id: 1, name: 'Mr. Rahim Uddin', rating: 5, property: 'Starline Meridian', date: '2025-04-10', photo: '', location: 'Gulshan, Dhaka', text: 'Exceptional quality and on-time delivery. Starline Builders exceeded all our expectations. The finish, the amenities, everything is world-class!' },
+  { id: 2, name: 'Mrs. Fatema Begum', rating: 5, property: 'Starline Azure', date: '2025-03-22', photo: '', location: 'Banani, Dhaka', text: 'Very professional team. From booking to handover, the process was completely transparent. We are extremely happy with our new home.' },
+  { id: 3, name: 'Mr. Kamal Hossain', rating: 4, property: 'Starline Crown', date: '2025-02-15', photo: '', location: 'Bashundhara', text: 'Great value for money. The construction quality is top-notch and the location is perfect. Highly recommend Starline Builders.' },
+];
+
+let customerReviews = [];
+let editingReviewId = null;
+
+function loadReviews() {
+  customerReviews = JSON.parse(localStorage.getItem('sl_reviews') || 'null') || DEFAULT_REVIEWS;
+}
+function saveReviews() {
+  localStorage.setItem('sl_reviews', JSON.stringify(customerReviews));
+  if (firebaseReady) dbSetSingle('reviews', { list: customerReviews });
+}
+
+// ── Stars helper ─────────────────────────────
+function starsHtml(score) {
+  const full  = Math.floor(score);
+  const half  = score % 1 >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  return '<i class="fas fa-star"></i>'.repeat(full) +
+         (half ? '<i class="fas fa-star-half-alt"></i>' : '') +
+         '<i class="far fa-star"></i>'.repeat(empty);
+}
+
+// ── Render Reviews on website ────────────────
+function renderRating() {
+  const sec = document.getElementById('cpRatingSection');
+  if (!sec) return;
+  if (!customerReviews.length) {
+    sec.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:3rem">No reviews yet.</p>';
+    return;
+  }
+
+  // Calculate stats
+  const total   = customerReviews.length;
+  const avg     = (customerReviews.reduce((s, r) => s + +r.rating, 0) / total).toFixed(1);
+  const counts  = [5,4,3,2,1].map(star => customerReviews.filter(r => +r.rating === star).length);
+  const maxCount = Math.max(...counts, 1);
+
+  sec.innerHTML = `
+    <!-- Summary -->
+    <div class="cp-review-summary">
+      <div class="cp-review-big">
+        <div class="cp-review-score">${avg}</div>
+        <div class="cp-review-stars">${starsHtml(+avg)}</div>
+        <div class="cp-review-total"><strong style="color:var(--gold)">${total}</strong> Customer Reviews</div>
+      </div>
+      <div class="cp-review-breakdown">
+        ${[5,4,3,2,1].map((star,i) => `
+          <div class="cp-review-bar-item">
+            <div class="cp-review-bar-stars">${'★'.repeat(star)}${'☆'.repeat(5-star)}</div>
+            <div class="cp-review-bar-track">
+              <div class="cp-review-bar-fill" style="width:${(counts[i]/maxCount*100).toFixed(0)}%"></div>
+            </div>
+            <div class="cp-review-bar-count">${counts[i]}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Review Cards -->
+    <div class="cp-reviews-grid">
+      ${[...customerReviews].reverse().map(r => `
+        <div class="cp-review-card reveal">
+          <div class="cp-review-quote">"</div>
+          <div class="cp-review-card-header">
+            ${r.photo
+              ? `<img class="cp-review-avatar" src="${r.photo}" alt="${r.name}" onerror="this.style.display='none'">`
+              : `<div class="cp-review-avatar-placeholder"><i class="fas fa-user"></i></div>`}
+            <div>
+              <div class="cp-review-card-name">${r.name}</div>
+              <div class="cp-review-card-meta">
+                <i class="fas fa-map-marker-alt" style="color:var(--gold);font-size:0.65rem;margin-right:3px"></i>${r.location || ''}
+                ${r.date ? ` · ${new Date(r.date).toLocaleDateString('en-GB',{month:'short',year:'numeric'})}` : ''}
+              </div>
+            </div>
+            <div class="cp-review-card-stars">${starsHtml(+r.rating)}</div>
+          </div>
+          ${r.property ? `<div class="cp-review-card-property"><i class="fas fa-building"></i>${r.property}</div>` : ''}
+          <div class="cp-review-card-text">${r.text}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  setTimeout(initReveal, 50);
+}
+
+const DEFAULT_NEWS = [
+  { id: 1, title: 'Starline Meridian Wins National Architecture Award 2025', category: 'award',   date: '2025-03-15', image: '', content: 'Starline Meridian has been recognized as the best luxury residential project at the National Real Estate Awards 2025.' },
+  { id: 2, title: 'New Project Launch: Starline Galaxy in Purbachal',         category: 'project', date: '2025-02-20', image: '', content: 'We are proud to announce the launch of Starline Galaxy, our most ambitious project in Purbachal New Town.' },
+  { id: 3, title: 'Starline Builders Celebrates 25 Years of Excellence',      category: 'news',    date: '2025-01-10', image: '', content: 'As we mark our 25th anniversary, we reflect on our journey of building over 250 landmark properties across Dhaka.' },
+];
+
+
+
+// ── Company Profile variables ─────────────────
+let boardMembers   = {};
+let employees      = [];
+let newsItems      = [];
+let companyProfile = {};
+let editingEmpId   = null;
+let editingNewsId  = null;
+
+function loadCompanyData() {
+  boardMembers   = JSON.parse(localStorage.getItem('sl_board')    || 'null') || { ...DEFAULT_BOARD };
+  employees      = JSON.parse(localStorage.getItem('sl_employees') || 'null') || DEFAULT_EMPLOYEES;
+  customerReviews= JSON.parse(localStorage.getItem('sl_reviews')  || 'null') || DEFAULT_REVIEWS;
+  newsItems      = JSON.parse(localStorage.getItem('sl_news')     || 'null') || DEFAULT_NEWS;
+  companyProfile = JSON.parse(localStorage.getItem('sl_company')  || 'null') || {};
+}
+
+function saveBoard()    { localStorage.setItem('sl_board',     JSON.stringify(boardMembers));  if(firebaseReady) dbSetSingle('board',    boardMembers); }
+function saveEmployees(){ localStorage.setItem('sl_employees', JSON.stringify(employees));     if(firebaseReady) dbSetSingle('employees',{ list: employees }); }
+function saveNews()     { localStorage.setItem('sl_news',      JSON.stringify(newsItems));     if(firebaseReady) dbSetSingle('news',     { items: newsItems }); }
+function saveCompany()  { localStorage.setItem('sl_company',   JSON.stringify(companyProfile)); if(firebaseReady) dbSetSingle('company', companyProfile); }
+
+// ── Admin: Render Reviews table ──────────────
+function renderAdminReviews() {
+  const tbody = document.getElementById('reviewTableBody'); if (!tbody) return;
+  if (!customerReviews.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No reviews yet</td></tr>'; return; }
+  const sorted = [...customerReviews].reverse();
+  tbody.innerHTML = sorted.map((r, i) => `
+    <tr>
+      <td style="color:var(--gold);font-weight:700;text-align:center">#${i+1}</td>
+      <td>${r.photo ? `<img src="${r.photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">` : `<div style="width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.1);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:0.8rem"><i class="fas fa-user"></i></div>`}</td>
+      <td style="color:var(--text);font-weight:600">${r.name}</td>
+      <td style="color:var(--gold)">${'★'.repeat(+r.rating)}${'☆'.repeat(5-+r.rating)}</td>
+      <td style="color:var(--text-muted);font-size:0.82rem">${r.property||'-'}</td>
+      <td style="color:var(--text-muted);font-size:0.82rem">${r.date||'-'}</td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editReview(${r.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn-delete" onclick="deleteReview(${r.id})"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('');
+}
+
+window.editReview = function(id) {
+  const r = customerReviews.find(r => r.id === id); if (!r) return;
+  editingReviewId = id;
+  document.getElementById('reviewFormTitle').textContent = 'Edit Review';
+  document.getElementById('reviewName').value     = r.name;
+  document.getElementById('reviewRating').value   = r.rating;
+  document.getElementById('reviewProperty').value = r.property || '';
+  document.getElementById('reviewDate').value     = r.date || '';
+  document.getElementById('reviewPhoto').value    = r.photo || '';
+  document.getElementById('reviewLocation').value = r.location || '';
+  document.getElementById('reviewText').value     = r.text || '';
+  document.getElementById('reviewFormCard').style.display = 'block';
+  document.getElementById('reviewFormCard').scrollIntoView({ behavior:'smooth' });
+};
+
+window.deleteReview = function(id) {
+  if (!confirm('Delete this review?')) return;
+  customerReviews = customerReviews.filter(r => r.id !== id);
+  saveReviews(); renderRating(); renderAdminReviews();
+  showToast('✓ Review deleted.');
+};
+
+// ── Stars helper ─────────────────────────────
+function starsHtml(score) {
+  const full  = Math.floor(score);
+  const half  = score % 1 >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  return '<i class="fas fa-star"></i>'.repeat(full) +
+         (half ? '<i class="fas fa-star-half-alt"></i>' : '') +
+         '<i class="far fa-star"></i>'.repeat(empty);
+}
+
+// ── Render Board on website ───────────────────
+function renderBoard() {
+  const grid = document.getElementById('cpBoardGrid');
+  if (!grid) return;
+  grid.innerHTML = BOARD_ROLES.map(role => {
+    const m = boardMembers[role.key] || {};
+    return `
+      <div class="cp-board-card reveal">
+        <div class="cp-board-role-badge"><i class="${role.icon}" style="margin-right:5px"></i>${role.label}</div>
+        ${m.photo
+          ? `<img class="cp-team-photo" src="${m.photo}" alt="${m.name||''}" onerror="this.style.display='none'">`
+          : `<div class="cp-team-photo-placeholder"><i class="fas fa-user-tie"></i></div>`}
+        <div class="cp-team-name">${m.name || 'Not Set'}</div>
+        ${m.bio ? `<div class="cp-team-bio" style="margin-top:0.5rem">${m.bio}</div>` : ''}
+      </div>`;
+  }).join('');
+  setTimeout(initReveal, 50);
+}
+
+// ── Render Employees on website ───────────────
+function renderTeam() {
+  const grid = document.getElementById('cpTeamGrid');
+  if (!grid) return;
+  if (!employees.length) { grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1">No employees added yet.</p>'; return; }
+  grid.innerHTML = employees.map(e => `
+    <div class="cp-team-card reveal">
+      <div class="cp-board-role-badge">
+        <i class="fas fa-id-badge" style="margin-right:5px"></i>${e.dept || 'Staff'}
+      </div>
+      ${e.photo
+        ? `<img class="cp-team-photo" src="${e.photo}" alt="${e.name}" onerror="this.style.display='none'">`
+        : `<div class="cp-team-photo-placeholder"><i class="fas fa-user"></i></div>`}
+      <div class="cp-team-name">${e.name}</div>
+      <div class="cp-team-role">${e.role}</div>
+      ${e.bio ? `<div class="cp-team-bio">${e.bio}</div>` : ''}
+    </div>
+  `).join('');
+  setTimeout(initReveal, 50);
+}
+
+// ── Render News on website ────────────────────
+const NEWS_CATEGORIES = [
+  { value: 'news',    label: 'News',           color: '#3b82f6' },
+  { value: 'project', label: 'Project Update', color: '#22c55e' },
+  { value: 'award',   label: 'Award',          color: '#f59e0b' },
+  { value: 'event',   label: 'Event',          color: '#a855f7' },
+  { value: 'upcoming',label: 'Upcoming',       color: '#ec4899' },
+];
+
+function getCatInfo(cat) {
+  return NEWS_CATEGORIES.find(c => c.value === cat) || { label: cat, color: '#c9a84c' };
+}
+
+function renderNews() {
+  const grid = document.getElementById('cpNewsGrid');
+  if (!grid) return;
+  if (!newsItems.length) {
+    grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem">No news added yet.</p>';
+    return;
+  }
+  const sorted = [...newsItems].sort((a,b) => new Date(b.date) - new Date(a.date));
+  grid.innerHTML = sorted.map(n => {
+    const ci = getCatInfo(n.category);
+    return `
+    <div class="cp-news-card reveal" onclick="openNewsDetail(${n.id})">
+      ${n.image
+        ? `<img class="cp-news-img" src="${n.image}" alt="${n.title}" onerror="this.style.display='none'">`
+        : `<div class="cp-news-img-placeholder"><i class="fas fa-newspaper"></i></div>`}
+      <div class="cp-news-body">
+        <div class="cp-news-meta">
+          <span class="cp-news-cat" style="background:${ci.color}22;color:${ci.color};border-color:${ci.color}44">
+            ${ci.label}
+          </span>
+          <span class="cp-news-date">
+            <i class="fas fa-calendar-alt"></i>
+            ${n.date ? new Date(n.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''}
+          </span>
+        </div>
+        <div class="cp-news-title">${n.title}</div>
+        <div class="cp-news-content">${n.content}</div>
+        <div style="margin-top:1rem;font-size:0.78rem;color:var(--gold);font-weight:600;display:flex;align-items:center;gap:0.3rem">
+          Read More <i class="fas fa-arrow-right" style="font-size:0.65rem"></i>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(initReveal, 50);
+}
+
+// ── News Detail Page ──────────────────────────
+window.openNewsDetail = function(id) {
+  const n = newsItems.find(n => n.id === id);
+  if (!n) return;
+  const ci = getCatInfo(n.category);
+  const overlay = document.getElementById('newsDetailOverlay');
+  const content = document.getElementById('newsDetailContent');
+  const shareText = encodeURIComponent(`${n.title} — STARLINE BUILDERS LTD.`);
+  const shareUrl  = encodeURIComponent(window.location.href);
+
+  // Get WhatsApp/Telegram links from settings
+  const wa = settings.socialLinks?.whatsapp || '';
+  const tg = settings.socialLinks?.telegram || '';
+
+  content.innerHTML = `
+    ${n.image ? `<img class="news-detail-hero-img" src="${n.image}" alt="${n.title}" onerror="this.style.display='none'">` : ''}
+    ${n.video ? `
+      <div class="news-detail-video">
+        <iframe src="${n.video.includes('youtube.com/watch') ? n.video.replace('watch?v=','embed/') : n.video}"
+          allowfullscreen allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+      </div>` : ''}
+    <div class="news-detail-meta">
+      <span class="news-detail-cat" style="background:${ci.color}22;color:${ci.color};border-color:${ci.color}44">${ci.label}</span>
+      <span class="news-detail-date">
+        <i class="fas fa-calendar-alt"></i>
+        ${n.date ? new Date(n.date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : ''}
+      </span>
+    </div>
+    <h1 class="news-detail-title">${n.title}</h1>
+    <div class="news-detail-body">${n.content || ''}</div>
+    <div class="news-detail-share">
+      <span>Share:</span>
+      ${wa ? `<a class="share-btn share-wa" href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>` : ''}
+      ${tg ? `<a class="share-btn share-tg" href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" rel="noopener">
+        <i class="fab fa-telegram-plane"></i> Telegram
+      </a>` : ''}
+      <a class="share-btn" style="background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid var(--glass-border)"
+        href="javascript:navigator.clipboard.writeText(window.location.href).then(()=>showToast('✓ Link copied!'))">
+        <i class="fas fa-link"></i> Copy Link
+      </a>
+    </div>
+  `;
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  overlay.scrollTop = 0;
+};
+
+// Close news detail
+// News detail back button — handled in main DOMContentLoaded below
+
+// Add escape key for news detail
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('newsDetailOverlay')?.classList.remove('open');
+  }
+});
+
+// ── Apply company overview ────────────────────
+function applyCompanyProfile() {
+  const cp = companyProfile;
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.textContent = val; };
+  set('cpTagline',   cp.tagline);
+  set('cpAboutText', cp.aboutText);
+  set('cpProjects',  cp.projects);
+  set('cpFamilies',  cp.families);
+  set('cpLocations', cp.locations);
+  const img = document.getElementById('cpCompanyImg');
+  if (img && cp.companyImg) img.src = cp.companyImg;
+}
+
+// ── Admin: Board edit forms ───────────────────
+function renderBoardAdmin() {
+  const wrap = document.getElementById('boardMembersAdmin');
+  if (!wrap) return;
+  wrap.innerHTML = BOARD_ROLES.map(role => {
+    const m = boardMembers[role.key] || {};
+    return `
+      <div class="board-member-edit">
+        <div class="board-role-title"><i class="${role.icon}"></i>${role.label}</div>
+        <div class="admin-form-grid">
+          <div class="form-group"><label>Full Name</label>
+            <input type="text" id="board_name_${role.key}" value="${m.name||''}" placeholder="Full name"/>
+          </div>
+          <div class="form-group"><label>Photo</label>
+            <div style="position:relative">
+              <input type="file" id="board_file_${role.key}" accept="image/*"
+                style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2"
+                onchange="handleBoardPhoto(this,'${role.key}')"/>
+              <div style="padding:0.6rem 1rem;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;cursor:pointer;font-size:0.8rem;color:var(--text-muted)">
+                <i class="fas fa-camera" style="color:var(--gold);margin-right:5px"></i>Upload photo
+              </div>
+            </div>
+            <input type="text" id="board_photo_${role.key}" value="${m.photo||''}" placeholder="or paste photo URL"
+              style="margin-top:0.4rem;padding:0.6rem 1rem;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;color:var(--text);font-size:0.8rem;font-family:var(--body-font)"/>
+          </div>
+          <div class="form-group full"><label>Bio</label>
+            <textarea id="board_bio_${role.key}" rows="2" placeholder="Brief bio...">${m.bio||''}</textarea>
+          </div>
+        </div>
+        <button class="btn-primary" style="margin-top:0.5rem;font-size:0.78rem;padding:0.6rem 1.4rem" onclick="saveBoardMember('${role.key}')">
+          <i class="fas fa-save"></i> Save ${role.label}
+        </button>
+      </div>`;
+  }).join('');
+}
+
+window.handleBoardPhoto = function(input, key) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById(`board_photo_${key}`).value = e.target.result; };
+  reader.readAsDataURL(file);
+};
+
+window.saveBoardMember = function(key) {
+  boardMembers[key] = {
+    name:  document.getElementById(`board_name_${key}`).value.trim(),
+    photo: document.getElementById(`board_photo_${key}`).value.trim(),
+    bio:   document.getElementById(`board_bio_${key}`).value.trim(),
+  };
+  saveBoard(); renderBoard();
+  showToast(`✓ ${BOARD_ROLES.find(r=>r.key===key)?.label} updated!`);
+};
+
+// ── Admin: Employees ──────────────────────────
+function renderAdminEmployees() {
+  const tbody = document.getElementById('empTableBody'); if (!tbody) return;
+  if (!employees.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No employees yet</td></tr>'; return; }
+  tbody.innerHTML = employees.map(e => `
+    <tr>
+      <td>${e.photo ? `<img src="${e.photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">` : `<div style="width:40px;height:40px;border-radius:50%;background:rgba(201,168,76,0.1);display:flex;align-items:center;justify-content:center;color:var(--gold)"><i class="fas fa-user"></i></div>`}</td>
+      <td style="color:var(--text);font-weight:600">${e.name}</td>
+      <td>${e.role}</td>
+      <td><span style="padding:0.2rem 0.7rem;border-radius:50px;background:rgba(201,168,76,0.1);color:var(--gold);font-size:0.72rem;font-weight:700">${e.dept||'-'}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editEmployee(${e.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn-delete" onclick="deleteEmployee(${e.id})"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderAdminNews() {
+  const tbody = document.getElementById('newsTableBody'); if (!tbody) return;
+  if (!newsItems.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No news yet</td></tr>'; return; }
+  const sorted = [...newsItems].sort((a,b) => new Date(b.date) - new Date(a.date));
+  tbody.innerHTML = sorted.map((n,i) => `
+    <tr>
+      <td style="color:var(--gold);font-weight:700;text-align:center">#${i+1}</td>
+      <td style="color:var(--text);font-weight:600;max-width:200px">${n.title}</td>
+      <td><span style="padding:0.2rem 0.7rem;border-radius:50px;background:rgba(201,168,76,0.1);color:var(--gold);font-size:0.72rem;font-weight:700">${n.category}</span></td>
+      <td style="color:var(--text-muted);font-size:0.82rem">${n.date||'-'}</td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="editNewsItem(${n.id})"><i class="fas fa-edit"></i></button>
+        <button class="btn-delete" onclick="deleteNewsItem(${n.id})"><i class="fas fa-trash"></i></button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// populate rating form
+function populateRatingForm() {
+  const r = companyRating;
+  ['Overall','Total','Quality','Delivery','Service','Value','Design','Transparency'].forEach(k => {
+    const el = document.getElementById('rating'+k); if(el) el.value = r[k.toLowerCase()] || '';
+  });
+}
+
+window.editEmployee = function(id) {
+  const e = employees.find(e => e.id === id); if (!e) return;
+  editingEmpId = id;
+  document.getElementById('employeeFormTitle').textContent = 'Edit Employee';
+  document.getElementById('empName').value  = e.name;
+  document.getElementById('empRole').value  = e.role;
+  document.getElementById('empDept').value  = e.dept || 'Sales';
+  document.getElementById('empPhoto').value = e.photo || '';
+  document.getElementById('empBio').value   = e.bio || '';
+  document.getElementById('employeeFormCard').style.display = 'block';
+  document.getElementById('employeeFormCard').scrollIntoView({ behavior:'smooth' });
+};
+window.deleteEmployee = function(id) {
+  if (!confirm('Delete this employee?')) return;
+  employees = employees.filter(e => e.id !== id);
+  saveEmployees(); renderTeam(); renderAdminEmployees();
+  showToast('✓ Employee deleted.');
+};
+window.editNewsItem = function(id) {
+  const n = newsItems.find(n => n.id === id); if (!n) return;
+  editingNewsId = id;
+  document.getElementById('newsFormTitle').textContent = 'Edit News';
+  document.getElementById('newsTitle').value    = n.title;
+  document.getElementById('newsCategory').value = n.category;
+  document.getElementById('newsDate').value     = n.date;
+  document.getElementById('newsImage').value    = n.image || '';
+  document.getElementById('newsContent').value  = n.content || '';
+  document.getElementById('newsFormCard').style.display = 'block';
+  document.getElementById('newsFormCard').scrollIntoView({ behavior:'smooth' });
+};
+window.deleteNewsItem = function(id) {
+  if (!confirm('Delete this news?')) return;
+  newsItems = newsItems.filter(n => n.id !== id);
+  saveNews(); renderNews(); renderAdminNews();
+  showToast('✓ News deleted.');
+};
+
+function populateCpAdminForm() {
+  const cp = companyProfile;
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val||''; };
+  set('cpAdminTagline',  cp.tagline);
+  set('cpAdminAbout',    cp.aboutText);
+  set('cpAdminProjects', cp.projects || '250+');
+  set('cpAdminFamilies', cp.families || '5000+');
+  set('cpAdminLocations',cp.locations || '12+');
+  set('cpAdminImg',      cp.companyImg || '');
+  // Show thumb if image exists
+  if (cp.companyImg) {
+    const thumb = document.getElementById('cpImgThumb');
+    const name  = document.getElementById('cpImgName');
+    if (thumb) thumb.innerHTML = `<img src="${cp.companyImg}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'color:var(--gold)\\'></i>'"/>`;
+    if (name)  name.textContent = 'Image set — click to change';
+  }
+}
+
+// ── DOMContentLoaded event listeners ─────────
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Company image file picker
+  document.getElementById('cpImgFile')?.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('cpAdminImg').value = e.target.result;
+      const thumb = document.getElementById('cpImgThumb');
+      const name  = document.getElementById('cpImgName');
+      if (thumb) thumb.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:4px"/>`;
+      if (name)  name.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // URL input preview
+  document.getElementById('cpAdminImg')?.addEventListener('input', function() {
+    const url = this.value.trim();
+    const thumb = document.getElementById('cpImgThumb');
+    if (thumb && url) thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'color:var(--gold)\\'></i>'"/>`;
+  });
+
+  // Save overview
+  document.getElementById('saveCpOverviewBtn')?.addEventListener('click', () => {
+    companyProfile.tagline    = document.getElementById('cpAdminTagline').value;
+    companyProfile.aboutText  = document.getElementById('cpAdminAbout').value;
+    companyProfile.projects   = document.getElementById('cpAdminProjects').value;
+    companyProfile.families   = document.getElementById('cpAdminFamilies').value;
+    companyProfile.locations  = document.getElementById('cpAdminLocations').value;
+    companyProfile.companyImg = document.getElementById('cpAdminImg').value;
+    saveCompany(); applyCompanyProfile();
+    showToast('✓ Company overview saved!');
+  });
+
+  // Add employee
+  document.getElementById('addEmployeeBtn')?.addEventListener('click', () => {
+    editingEmpId = null;
+    document.getElementById('employeeFormTitle').textContent = 'Add Employee';
+    ['empName','empRole','empPhoto','empBio'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('employeeFormCard').style.display = 'block';
+    document.getElementById('employeeFormCard').scrollIntoView({ behavior:'smooth' });
+  });
+  document.getElementById('cancelEmpBtn')?.addEventListener('click', () => {
+    document.getElementById('employeeFormCard').style.display = 'none'; editingEmpId = null;
+  });
+
+  // Employee photo file
+  document.getElementById('empPhotoFile')?.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('empPhoto').value = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  // Save employee
+  document.getElementById('saveEmpBtn')?.addEventListener('click', () => {
+    const name = document.getElementById('empName').value.trim();
+    if (!name) { showToast('✗ Name required.'); return; }
+    const emp = {
+      id:    editingEmpId || Date.now(),
+      name,  role:  document.getElementById('empRole').value,
+      dept:  document.getElementById('empDept').value,
+      photo: document.getElementById('empPhoto').value,
+      bio:   document.getElementById('empBio').value,
+    };
+    if (editingEmpId) {
+      const idx = employees.findIndex(e => e.id === editingEmpId);
+      if (idx !== -1) employees[idx] = emp;
+      showToast('✓ Employee updated!');
+    } else {
+      employees.push(emp);
+      showToast('✓ Employee added!');
+    }
+    saveEmployees(); renderTeam(); renderAdminEmployees();
+    document.getElementById('employeeFormCard').style.display = 'none'; editingEmpId = null;
+  });
+
+  // Add Review
+  document.getElementById('addReviewBtn')?.addEventListener('click', () => {
+    editingReviewId = null;
+    document.getElementById('reviewFormTitle').textContent = 'Add Customer Review';
+    ['reviewName','reviewProperty','reviewPhoto','reviewLocation','reviewText'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    document.getElementById('reviewRating').value = '5';
+    const rd = document.getElementById('reviewDate'); if(rd) rd.value = new Date().toISOString().split('T')[0];
+    document.getElementById('reviewFormCard').style.display = 'block';
+    document.getElementById('reviewFormCard').scrollIntoView({ behavior:'smooth' });
+  });
+
+  document.getElementById('cancelReviewBtn')?.addEventListener('click', () => {
+    document.getElementById('reviewFormCard').style.display = 'none'; editingReviewId = null;
+  });
+
+  // Review photo file picker
+  document.getElementById('reviewPhotoFile')?.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('reviewPhoto').value = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('saveReviewBtn')?.addEventListener('click', () => {
+    const name = document.getElementById('reviewName').value.trim();
+    if (!name) { showToast('✗ Customer name required.'); return; }
+    const review = {
+      id:       editingReviewId || Date.now(),
+      name,
+      rating:   document.getElementById('reviewRating').value,
+      property: document.getElementById('reviewProperty').value,
+      date:     document.getElementById('reviewDate').value,
+      photo:    document.getElementById('reviewPhoto').value,
+      location: document.getElementById('reviewLocation').value,
+      text:     document.getElementById('reviewText').value,
+    };
+    if (editingReviewId) {
+      const idx = customerReviews.findIndex(r => r.id === editingReviewId);
+      if (idx !== -1) customerReviews[idx] = review;
+      showToast('✓ Review updated!');
+    } else {
+      customerReviews.push(review);
+      showToast('✓ Review added!');
+    }
+    saveReviews(); renderRating(); renderAdminReviews();
+    document.getElementById('reviewFormCard').style.display = 'none'; editingReviewId = null;
+  });
+
+  // Add news
+  document.getElementById('addNewsBtn')?.addEventListener('click', () => {
+    editingNewsId = null;
+    document.getElementById('newsFormTitle').textContent = 'Add News';
+    ['newsTitle','newsContent','newsImage'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    const nd = document.getElementById('newsDate'); if(nd) nd.value = new Date().toISOString().split('T')[0];
+    document.getElementById('newsFormCard').style.display = 'block';
+    document.getElementById('newsFormCard').scrollIntoView({ behavior:'smooth' });
+  });
+  document.getElementById('cancelNewsBtn')?.addEventListener('click', () => {
+    document.getElementById('newsFormCard').style.display = 'none'; editingNewsId = null;
+  });
+  document.getElementById('saveNewsBtn')?.addEventListener('click', () => {
+    const title = document.getElementById('newsTitle').value.trim();
+    if (!title) { showToast('✗ Title required.'); return; }
+    const item = {
+      id:       editingNewsId || Date.now(),
+      title,    category: document.getElementById('newsCategory').value,
+      date:     document.getElementById('newsDate').value,
+      image:    document.getElementById('newsImage').value,
+      video:    document.getElementById('newsVideo')?.value || '',
+      content:  document.getElementById('newsContent').value,
+    };
+    if (editingNewsId) {
+      const idx = newsItems.findIndex(n => n.id === editingNewsId);
+      if (idx !== -1) newsItems[idx] = item;
+      showToast('✓ News updated!');
+    } else {
+      newsItems.push(item);
+      showToast('✓ News added!');
+    }
+    saveNews(); renderNews(); renderAdminNews();
+    document.getElementById('newsFormCard').style.display = 'none'; editingNewsId = null;
+  });
+});
 function fixMessageTableHeaders() {
   // Messages panel table — add # column
   const msgTable = document.querySelector('#dashMessages .admin-table thead tr');
@@ -2348,27 +3360,31 @@ function fixMessageTableHeaders() {
 // INIT
 // =============================================
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Init Firebase first
   initFirebase();
-
-  // 2. Show loader while fetching data
   runLoader();
-
-  // 3. Load data with timeout — if Firebase hangs, continue after 4s
   try {
-    await Promise.race([
-      loadData(),
-      new Promise(resolve => setTimeout(resolve, 4000)) // max 4s wait
-    ]);
-  } catch(e) {
-    console.warn('Data load error, continuing with localStorage:', e);
-  }
+    await Promise.race([loadData(), new Promise(resolve => setTimeout(resolve, 4000))]);
+  } catch(e) { console.warn('Data load error:', e); }
 
-  // 4. Init UI
+  // Load company profile data BEFORE rendering
+  loadCompanyData(); // loads board, employees, reviews, news, companyProfile
+
+  // News detail back button
+  document.getElementById('newsDetailBack')?.addEventListener('click', () => {
+    document.getElementById('newsDetailOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  });
+
+  initTopBar();
   initNavbar();
   initHeroSlider();
   renderProperties();
   renderWhyCards();
+  renderBoard();
+  renderTeam();
+  renderRating();   // uses customerReviews (loaded above)
+  renderNews();     // uses newsItems (loaded above)
+  applyCompanyProfile();
   initFilterTabs();
   initContactForm();
   initCounters();
@@ -2381,11 +3397,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     el.classList.add('reveal');
   });
   setTimeout(initReveal, 100);
-
-  // 5. Start real-time listeners
   startRealtimeListeners();
+  setTimeout(() => applyFooterSettings(), 500);
 
-  // 6. Restore admin session after refresh
   if (sessionStorage.getItem('sl_admin_session') === '1') {
     adminLoggedIn = true;
     setTimeout(() => openAdminDashboard(), 300);
