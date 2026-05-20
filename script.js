@@ -2715,10 +2715,10 @@ const BOARD_ROLES = [
 ];
 
 const DEFAULT_BOARD = {
-  chairman:     { name: 'Mr. Abdullah Al Mamun', photo: '', bio: 'Visionary leader with 30+ years in real estate.' },
-  managing_dir: { name: 'Eng. Rafiqul Islam',    photo: '', bio: 'Overseeing all projects with focus on quality.' },
-  dir_sales:    { name: 'Mr. Karim Hossain',     photo: '', bio: 'Leading sales strategy and client relations.' },
-  director:     { name: 'Ar. Nasrin Sultana',    photo: '', bio: 'Award-winning architect and design lead.' },
+  chairman:     { name: 'Md Hridoy Ahmed', photo: '', bio: 'Chairman & Founder' },
+  managing_dir: { name: 'Md. Saifur Rahman',    photo: '', bio: 'Managing Director & CEO' },
+  dir_sales:    { name: 'Md Salim Reza',     photo: '', bio: 'Director & Head of Sales' },
+  director:     { name: 'Md Tambir Hossan',    photo: '', bio: 'Director & CFO' },
 };
 
 const DEFAULT_EMPLOYEES = [];
