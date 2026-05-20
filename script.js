@@ -339,37 +339,88 @@ async function saveCustomOptions() {
   }
 }
 
-// ── Real-time listeners (admin dashboard) ────
+// ── Real-time listeners — ALL devices sync ────
 function startRealtimeListeners() {
   if (!firebaseReady) return;
 
-  // Messages: update admin table live when new message arrives
+  // Properties
+  dbListen('properties', docs => {
+    const clean = docs.map(p=>{const{_docId,...r}=p;return r;}).filter(p=>p.id&&p.name);
+    if (!clean.length) return;
+    properties = clean.sort((a,b)=>(a.id||0)-(b.id||0));
+    localStorage.setItem('sl_properties', JSON.stringify(properties));
+    renderProperties();
+    if (adminLoggedIn) { renderAdminProperties(); refreshAdminData(); renderCharts(); }
+  });
+
+  // Messages
   dbListen('messages', docs => {
-    messages = docs.sort((a,b) => (a.id||0)-(b.id||0));
+    messages = docs.map(m=>{const{_docId,...r}=m;return r;}).sort((a,b)=>(a.id||0)-(b.id||0));
     localStorage.setItem('sl_messages', JSON.stringify(messages));
     if (adminLoggedIn) {
       refreshAdminData();
-      // Flash notification
-      const count = document.getElementById('statMessages');
-      if (count) count.style.color = 'var(--gold)';
-      setTimeout(() => { if(count) count.style.color = ''; }, 2000);
+      const c = document.getElementById('statMessages');
+      if (c) { c.style.color='var(--gold)'; setTimeout(()=>{c.style.color='';},2000); }
     }
   });
 
-  // Users: update admin table live when new user registers
+  // Users
   dbListen('users', docs => {
-    users = docs.sort((a,b) => (a.id||0)-(b.id||0));
+    users = docs.map(u=>{const{_docId,...r}=u;return r;}).sort((a,b)=>(a.id||0)-(b.id||0));
     localStorage.setItem('sl_users', JSON.stringify(users));
     if (adminLoggedIn) refreshAdminData();
   });
 
-  // Properties: update website live when admin adds/edits
-  dbListen('properties', docs => {
-    if (!docs.length) return;
-    properties = docs.sort((a,b) => (a.id||0)-(b.id||0));
-    localStorage.setItem('sl_properties', JSON.stringify(properties));
-    renderProperties();
-    if (adminLoggedIn) { renderAdminProperties(); refreshAdminData(); }
+  // Settings (hero text, contact, footer, theme)
+  db.collection('siteconfig').doc('settings').onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data(); if (!data||!Object.keys(data).length) return;
+    settings = data; localStorage.setItem('sl_settings', JSON.stringify(settings));
+    applyHeroSettings(); applyContactSettings(); applyFooterSettings(); applyTheme();
+    const bn = document.getElementById('navBrandName');
+    if (bn && settings.brandName) bn.textContent = settings.brandName;
+  });
+
+  // Hero slides
+  db.collection('siteconfig').doc('slides').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data?.urls?.length) { heroSlides=data.urls; localStorage.setItem('sl_slides',JSON.stringify(heroSlides)); initHeroSlider(); }
+  });
+
+  // Why cards
+  db.collection('siteconfig').doc('whycards').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data?.cards?.length) { whyCards=data.cards; localStorage.setItem('sl_why',JSON.stringify(whyCards)); renderWhyCards(); }
+  });
+
+  // News
+  db.collection('siteconfig').doc('news').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data?.items) { newsItems=data.items; localStorage.setItem('sl_news',JSON.stringify(newsItems)); renderNews(); if(adminLoggedIn) renderAdminNews(); }
+  });
+
+  // Customer Reviews
+  db.collection('siteconfig').doc('reviews').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data?.list) { customerReviews=data.list; localStorage.setItem('sl_reviews',JSON.stringify(customerReviews)); renderRating(); if(adminLoggedIn) renderAdminReviews(); }
+  });
+
+  // Board members
+  db.collection('siteconfig').doc('board').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data) { boardMembers=data; localStorage.setItem('sl_board',JSON.stringify(data)); renderBoard(); }
+  });
+
+  // Employees
+  db.collection('siteconfig').doc('employees').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data?.list) { employees=data.list; localStorage.setItem('sl_employees',JSON.stringify(employees)); renderTeam(); if(adminLoggedIn) renderAdminEmployees(); }
+  });
+
+  // Company profile
+  db.collection('siteconfig').doc('company').onSnapshot(snap => {
+    if (!snap.exists) return; const data = snap.data();
+    if (data) { companyProfile=data; localStorage.setItem('sl_company',JSON.stringify(data)); applyCompanyProfile(); }
   });
 }
 
