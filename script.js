@@ -3102,14 +3102,39 @@ window.handleBoardPhoto = function(input, key) {
   reader.readAsDataURL(file);
 };
 
-window.saveBoardMember = function(key) {
-  boardMembers[key] = {
-    name:  document.getElementById(`board_name_${key}`).value.trim(),
-    photo: document.getElementById(`board_photo_${key}`).value.trim(),
-    bio:   document.getElementById(`board_bio_${key}`).value.trim(),
-  };
-  saveBoard(); renderBoard();
-  showToast(`✓ ${BOARD_ROLES.find(r=>r.key===key)?.label} updated!`);
+window.saveBoardMember = async function(key) {
+  const name  = document.getElementById(`board_name_${key}`)?.value.trim() || '';
+  const photo = document.getElementById(`board_photo_${key}`)?.value.trim() || '';
+  const bio   = document.getElementById(`board_bio_${key}`)?.value.trim() || '';
+
+  if (!name) { showToast('✗ Name is required.'); return; }
+
+  boardMembers[key] = { name, photo, bio };
+
+  // ① Save to localStorage immediately
+  localStorage.setItem('sl_board', JSON.stringify(boardMembers));
+  // ② Render website immediately
+  renderBoard();
+  showToast(`✓ ${BOARD_ROLES.find(r=>r.key===key)?.label} saved!`);
+
+  // ③ Save to Firebase — strip base64 photos (too large for Firestore 1MB limit)
+  // Store photo in localStorage only if it's base64, use URL for Firestore
+  if (firebaseReady) {
+    try {
+      const fbBoard = {};
+      Object.entries(boardMembers).forEach(([k, m]) => {
+        fbBoard[k] = {
+          name:  m.name  || '',
+          bio:   m.bio   || '',
+          // Only save URL photos to Firebase, not base64 (too large)
+          photo: (m.photo && !m.photo.startsWith('data:')) ? m.photo : '',
+        };
+      });
+      await dbSetSingle('board', fbBoard);
+    } catch(e) {
+      console.warn('Board Firebase save error:', e);
+    }
+  }
 };
 
 // ── Admin: Employees ──────────────────────────
@@ -3342,10 +3367,53 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addNewsBtn')?.addEventListener('click', () => {
     editingNewsId = null;
     document.getElementById('newsFormTitle').textContent = 'Add News';
-    ['newsTitle','newsContent','newsImage'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    ['newsTitle','newsContent','newsImage','newsVideo'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
     const nd = document.getElementById('newsDate'); if(nd) nd.value = new Date().toISOString().split('T')[0];
+    // Reset pickers
+    const thumb = document.getElementById('newsImageThumb');
+    const imgName = document.getElementById('newsImageName');
+    const vidName = document.getElementById('newsVideoName');
+    if (thumb) thumb.innerHTML = '<i class="fas fa-image" style="color:var(--gold);font-size:0.9rem"></i>';
+    if (imgName) imgName.textContent = 'Click to upload image';
+    if (vidName) vidName.textContent = 'Click to upload video';
     document.getElementById('newsFormCard').style.display = 'block';
     document.getElementById('newsFormCard').scrollIntoView({ behavior:'smooth' });
+  });
+
+  // News image file picker
+  document.getElementById('newsImageFile')?.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('newsImage').value = e.target.result;
+      const thumb = document.getElementById('newsImageThumb');
+      const name  = document.getElementById('newsImageName');
+      if (thumb) thumb.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:4px"/>`;
+      if (name)  name.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // News video file picker
+  document.getElementById('newsVideoFile')?.addEventListener('change', function() {
+    const file = this.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('newsVideo').value = e.target.result;
+      const name = document.getElementById('newsVideoName');
+      if (name) name.textContent = `✓ ${file.name} (${(file.size/1024/1024).toFixed(1)} MB)`;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // News image URL live preview
+  document.getElementById('newsImage')?.addEventListener('input', function() {
+    const url = this.value.trim();
+    const thumb = document.getElementById('newsImageThumb');
+    if (thumb && url && url.startsWith('http')) {
+      thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-image\\' style=\\'color:var(--gold);\\'></i>'"/>`;
+      const name = document.getElementById('newsImageName'); if(name) name.textContent='URL set';
+    }
   });
   document.getElementById('cancelNewsBtn')?.addEventListener('click', () => {
     document.getElementById('newsFormCard').style.display = 'none'; editingNewsId = null;
